@@ -67,6 +67,32 @@ const Controller = {
 
   // ── Wetter ──
 
+  WMO_DESCRIPTIONS: {
+    0: 'Klar',
+    1: 'Ueberwiegend klar',
+    2: 'Teilweise bewoelkt',
+    3: 'Bedeckt',
+    45: 'Nebel',
+    48: 'Nebel mit Reif',
+    51: 'Leichter Nieselregen',
+    53: 'Nieselregen',
+    55: 'Starker Nieselregen',
+    61: 'Leichter Regen',
+    63: 'Regen',
+    65: 'Starker Regen',
+    71: 'Leichter Schneefall',
+    73: 'Schneefall',
+    75: 'Starker Schneefall',
+    80: 'Regenschauer',
+    81: 'Starke Regenschauer',
+    82: 'Heftige Regenschauer',
+    85: 'Schneeschauer',
+    86: 'Starke Schneeschauer',
+    95: 'Gewitter',
+    96: 'Gewitter mit Hagel',
+    99: 'Gewitter mit starkem Hagel',
+  },
+
   _initWeather() {
     const cached = Model.getCachedWeather();
     if (cached) {
@@ -78,36 +104,58 @@ const Controller = {
 
   async _fetchWeather() {
     try {
-      // Zuerst IP-basierte Standortermittlung
-      let city = 'Berlin';
-      try {
-        const geoRes = await fetch('https://ipapi.co/json/');
-        if (geoRes.ok) {
-          const geoData = await geoRes.json();
-          if (geoData.city) city = geoData.city;
-        }
-      } catch (e) {
-        // Fallback auf Berlin
-      }
+      const coords = await this._getCoordinates();
+      const url = 'https://api.open-meteo.com/v1/forecast'
+        + '?latitude=' + coords.lat
+        + '&longitude=' + coords.lon
+        + '&current=temperature_2m,weather_code'
+        + '&timezone=Europe%2FBerlin';
 
-      const res = await fetch('https://wttr.in/' + encodeURIComponent(city) + '?format=j1');
-      if (!res.ok) throw new Error('Weather API error');
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Weather API responded with ' + res.status);
       const data = await res.json();
-      const current = data.current_condition[0];
+
+      const temp = Math.round(data.current.temperature_2m);
+      const code = data.current.weather_code;
+      const desc = this.WMO_DESCRIPTIONS[code] || 'Unbekannt';
 
       const weather = {
-        temp: current.temp_C,
-        desc: (current.lang_de && current.lang_de[0])
-          ? current.lang_de[0].value
-          : current.weatherDesc[0].value,
-        city: city,
+        temp: temp,
+        desc: desc,
+        city: coords.city,
       };
 
       Model.cacheWeather(weather);
       View.displayWeather(weather);
     } catch (e) {
+      console.warn('Wetter konnte nicht geladen werden:', e);
       View.displayWeather(null);
     }
+  },
+
+  _getCoordinates() {
+    return new Promise(function(resolve) {
+      // Versuch 1: Browser Geolocation API
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            resolve({
+              lat: pos.coords.latitude.toFixed(2),
+              lon: pos.coords.longitude.toFixed(2),
+              city: 'Mein Standort',
+            });
+          },
+          function() {
+            // Geolocation abgelehnt oder fehlgeschlagen — Fallback Berlin
+            resolve({ lat: 52.52, lon: 13.41, city: 'Berlin' });
+          },
+          { timeout: 5000 }
+        );
+      } else {
+        // Kein Geolocation verfuegbar — Fallback Berlin
+        resolve({ lat: 52.52, lon: 13.41, city: 'Berlin' });
+      }
+    });
   },
 
   // ── To-Do Events ──
@@ -214,4 +262,5 @@ const Controller = {
     View.el('todoDate').value = Model.todayStr();
   },
 };
+
 

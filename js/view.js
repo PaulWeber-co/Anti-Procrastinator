@@ -45,14 +45,14 @@ const View = {
 
   displayWeather(data) {
     if (!data) {
-      this.el('weatherTemp').textContent = '--°C';
+      this.el('weatherTemp').textContent = '--';
       this.el('weatherDesc').textContent = 'Nicht verfuegbar';
       this.el('weatherIcon').textContent = '--';
       return;
     }
-    this.el('weatherTemp').textContent = data.temp + '°C';
-    this.el('weatherDesc').textContent = data.desc;
-    this.el('weatherIcon').textContent = data.temp + '°';
+    this.el('weatherTemp').textContent = data.temp + ' C';
+    this.el('weatherDesc').textContent = data.desc + ' / ' + data.city;
+    this.el('weatherIcon').textContent = data.temp + '\u00B0';
   },
 
   // ── Theme ──
@@ -386,4 +386,5 @@ const View = {
     return div.innerHTML;
   },
 };
+
 
