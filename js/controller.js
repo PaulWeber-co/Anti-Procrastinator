@@ -310,36 +310,160 @@ const Controller = {
     });
   },
 
-  // ── ICS Kalender Import ──
+  // ── Kalender Sync ──
 
   _initICSImport() {
     var self = this;
-    var importBtn = View.el('calImportBtn');
+
+    // Sync-Button öffnet Modal
+    View.el('calSyncBtn').addEventListener('click', function() {
+      self._openSyncModal();
+    });
+
+    View.el('calSyncClose').addEventListener('click', function() {
+      View.el('calSyncOverlay').classList.remove('visible');
+    });
+
+    View.el('calSyncOverlay').addEventListener('click', function(e) {
+      if (e.target === View.el('calSyncOverlay')) {
+        View.el('calSyncOverlay').classList.remove('visible');
+      }
+    });
+
+    // URL speichern + sync
+    View.el('syncUrlSave').addEventListener('click', function() {
+      var url = View.el('syncUrlInput').value.trim();
+      if (!url) return;
+      Model.setSyncUrl(url);
+      self._syncFromUrl(url);
+    });
+
+    // Datei-Import (Click + Drag&Drop)
+    var dropZone = View.el('syncDropZone');
     var fileInput = View.el('calIcsFile');
 
-    importBtn.addEventListener('click', function() {
+    dropZone.addEventListener('click', function() {
       fileInput.click();
     });
 
     fileInput.addEventListener('change', function(e) {
       var file = e.target.files[0];
-      if (!file) return;
-
-      var reader = new FileReader();
-      reader.onload = function(ev) {
-        var text = ev.target.result;
-        var events = Model.parseICS(text);
-        if (events.length === 0) {
-          alert('Keine Termine in der Datei gefunden.');
-          return;
-        }
-        var count = Model.importICSEvents(events);
-        alert(count + ' Termin(e) importiert.');
-        self.renderAll();
-      };
-      reader.readAsText(file);
+      if (file) self._importFile(file);
       fileInput.value = '';
     });
+
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      dropZone.classList.add('sync-drop-active');
+    });
+
+    dropZone.addEventListener('dragleave', function() {
+      dropZone.classList.remove('sync-drop-active');
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dropZone.classList.remove('sync-drop-active');
+      var file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith('.ics')) {
+        self._importFile(file);
+      }
+    });
+
+    // Clear sync events
+    View.el('syncClearBtn').addEventListener('click', function() {
+      Model.clearSyncEvents();
+      self._updateSyncStatus();
+      self.renderAll();
+    });
+
+    // Vorhandene URL laden
+    var savedUrl = Model.getSyncUrl();
+    if (savedUrl) {
+      // Auto-Sync alle 15 Minuten
+      var elapsed = Date.now() - Model.getLastSyncTime();
+      if (elapsed > 900000) {
+        this._syncFromUrl(savedUrl);
+      }
+      setInterval(function() {
+        self._syncFromUrl(Model.getSyncUrl());
+      }, 900000);
+    }
+  },
+
+  _openSyncModal() {
+    var overlay = View.el('calSyncOverlay');
+    var urlInput = View.el('syncUrlInput');
+    urlInput.value = Model.getSyncUrl();
+    this._updateSyncStatus();
+    overlay.classList.add('visible');
+  },
+
+  _updateSyncStatus() {
+    var statusEl = View.el('syncUrlStatus');
+    var eventsSection = View.el('syncEventsSection');
+    var eventsCount = View.el('syncEventsCount');
+    var url = Model.getSyncUrl();
+    var syncEvents = Model.getSyncEvents();
+    var lastSync = Model.getLastSyncTime();
+
+    if (url) {
+      var timeStr = lastSync > 0
+        ? new Date(lastSync).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+        : '--';
+      statusEl.innerHTML = '<span class="sync-connected">Verbunden</span> — Letzte Sync: ' + timeStr;
+    } else {
+      statusEl.textContent = '';
+    }
+
+    if (syncEvents.length > 0) {
+      eventsSection.style.display = 'block';
+      eventsCount.textContent = syncEvents.length + ' Termine synchronisiert';
+    } else {
+      eventsSection.style.display = 'none';
+    }
+  },
+
+  _syncFromUrl(url) {
+    var self = this;
+    var statusEl = View.el('syncUrlStatus');
+    statusEl.innerHTML = '<span class="sync-loading">Synchronisiere...</span>';
+
+    // CORS-Proxy nötig für externe URLs
+    var proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+
+    fetch(proxyUrl)
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function(text) {
+        var count = Model.syncFromICS(text);
+        self._updateSyncStatus();
+        self.renderAll();
+      })
+      .catch(function(err) {
+        console.warn('Sync fehlgeschlagen:', err);
+        statusEl.innerHTML = '<span class="sync-error">Sync fehlgeschlagen — prüfe die URL</span>';
+      });
+  },
+
+  _importFile(file) {
+    var self = this;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var text = ev.target.result;
+      var events = Model.parseICS(text);
+      if (events.length === 0) {
+        alert('Keine Termine in der Datei gefunden.');
+        return;
+      }
+      var count = Model.importICSEvents(events);
+      alert(count + ' Termin(e) als Aufgaben importiert.');
+      self._updateSyncStatus();
+      self.renderAll();
+    };
+    reader.readAsText(file);
   },
 
   // ── Kalender Navigation ──
@@ -503,6 +627,7 @@ const Controller = {
     });
   },
 };
+
 
 
 

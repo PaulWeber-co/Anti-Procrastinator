@@ -136,8 +136,7 @@
       <div class="card-title-row">
         <div class="card-title">Kalender</div>
         <div class="cal-header-actions">
-          <button class="cal-import-btn" id="calImportBtn" title="Kalender importieren (.ics)">ICS</button>
-          <input type="file" id="calIcsFile" accept=".ics" class="sr-only" />
+          <button class="cal-import-btn" id="calSyncBtn" title="Kalender synchronisieren">SYNC</button>
           <button class="cal-expand-btn" id="calExpandBtn" title="Kalender vergrößern">
             <span class="cal-expand-icon" id="calExpandIcon"></span>
           </button>
@@ -149,6 +148,64 @@
         <button class="calendar-nav-btn" id="calNext">&gt;</button>
       </div>
       <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <!-- Kalender Sync Modal -->
+    <div class="modal-overlay" id="calSyncOverlay">
+      <div class="modal cal-sync-modal">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">Kalender Synchronisation</div>
+            <div class="modal-subtitle">Apple / Google Kalender verbinden</div>
+          </div>
+          <button class="modal-close" id="calSyncClose">x</button>
+        </div>
+        <div class="modal-body">
+
+          <!-- URL Abo -->
+          <div class="sync-section">
+            <div class="sync-section-title">Kalender-URL Abonnement</div>
+            <div class="sync-section-desc">
+              Füge eine öffentliche .ics-URL ein. Die Termine werden automatisch alle 15 Minuten synchronisiert.
+            </div>
+            <div class="sync-url-row">
+              <input type="text" class="sync-url-input" id="syncUrlInput" placeholder="https://calendar.google.com/...basic.ics" />
+              <button class="btn btn-primary" id="syncUrlSave">Verbinden</button>
+            </div>
+            <div class="sync-url-status" id="syncUrlStatus"></div>
+            <div class="sync-help">
+              <div class="sync-help-title">Wo finde ich die URL?</div>
+              <div class="sync-help-item">
+                <strong>Apple iCloud:</strong> icloud.com/calendar → Kalender teilen → Öffentlicher Kalender → Link kopieren
+              </div>
+              <div class="sync-help-item">
+                <strong>Google Calendar:</strong> Einstellungen → Kalender → Integration → Geheime iCal-Adresse kopieren
+              </div>
+              <div class="sync-help-item">
+                <strong>Outlook:</strong> Einstellungen → Kalender veröffentlichen → ICS-Link kopieren
+              </div>
+            </div>
+          </div>
+
+          <!-- Datei Import -->
+          <div class="sync-section">
+            <div class="sync-section-title">Datei importieren</div>
+            <div class="sync-section-desc">Exportiere deinen Kalender als .ics-Datei und lade sie hier hoch.</div>
+            <div class="sync-drop-zone" id="syncDropZone">
+              <div class="sync-drop-label">.ics-Datei hierher ziehen oder klicken</div>
+              <input type="file" id="calIcsFile" accept=".ics" class="sr-only" />
+            </div>
+          </div>
+
+          <!-- Importierte Events -->
+          <div class="sync-section" id="syncEventsSection" style="display:none">
+            <div class="sync-section-title">Synchronisierte Termine</div>
+            <div class="sync-events-count" id="syncEventsCount"></div>
+            <button class="btn sync-clear-btn" id="syncClearBtn">Sync-Termine löschen</button>
+          </div>
+
+        </div>
+      </div>
     </div>
 
     <!-- Charts -->
@@ -185,6 +242,7 @@
   </script>
 </body>
 </html>
+
 
 
 

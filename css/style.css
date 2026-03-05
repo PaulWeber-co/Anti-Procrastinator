@@ -40,10 +40,10 @@
   --tag-gesundheit-bg: rgba(50,50,50,0.07);
   --tag-lernen: #444;
   --tag-lernen-bg: rgba(70,70,70,0.07);
-  --donut-1: #d42020;
-  --donut-2: #e6b800;
-  --donut-3: #22a355;
-  --donut-4: #2563eb;
+  --donut-1: #1e3a5f;
+  --donut-2: #2563eb;
+  --donut-3: #60a5fa;
+  --donut-4: #bfdbfe;
 }
 
 [data-theme="dark"] {
@@ -82,10 +82,10 @@
   --tag-gesundheit-bg: rgba(200,200,200,0.08);
   --tag-lernen: #bbb;
   --tag-lernen-bg: rgba(190,190,190,0.08);
-  --donut-1: #ff4444;
-  --donut-2: #f0c030;
-  --donut-3: #34d474;
-  --donut-4: #4a9eff;
+  --donut-1: #93c5fd;
+  --donut-2: #60a5fa;
+  --donut-3: #3b82f6;
+  --donut-4: #1e40af;
 }
 
 /* ═══════════════════ RESET & BASE ═══════════════════ */
@@ -1674,6 +1674,168 @@ body {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ═══════════════════ KALENDER SYNC MODAL ═══════════════════ */
+.cal-sync-modal {
+  max-width: 640px;
+}
+
+.sync-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px dotted var(--border-dashed);
+}
+
+.sync-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.sync-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  margin-bottom: 6px;
+}
+
+.sync-section-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.sync-url-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.sync-url-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--bg-input);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.sync-url-input:focus {
+  border-color: var(--text);
+}
+
+.sync-url-input::placeholder {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.sync-url-status {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  margin-top: 4px;
+  min-height: 16px;
+}
+
+.sync-connected {
+  color: #22a355;
+  font-weight: 600;
+}
+
+.sync-loading {
+  color: var(--text-muted);
+}
+
+.sync-error {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.sync-help {
+  margin-top: 14px;
+  padding: 12px;
+  background: var(--bg-input);
+  border: 1px dashed var(--border-dashed);
+}
+
+.sync-help-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-bottom: 8px;
+}
+
+.sync-help-item {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.sync-help-item strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sync-help-item:last-child {
+  margin-bottom: 0;
+}
+
+.sync-drop-zone {
+  border: 2px dashed var(--border-dashed);
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sync-drop-zone:hover,
+.sync-drop-active {
+  border-color: var(--text);
+  background: var(--bg-hover);
+}
+
+.sync-drop-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.sync-events-count {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  margin-bottom: 10px;
+}
+
+.sync-clear-btn {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid var(--red);
+  font-size: 9px;
+  padding: 5px 14px;
+}
+
+.sync-clear-btn:hover {
+  background: var(--red);
+  color: #fff;
+}
+
+
+
 
 
 

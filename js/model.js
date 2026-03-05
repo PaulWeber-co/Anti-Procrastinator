@@ -9,6 +9,9 @@ const Model = {
     weatherTime: 'ht_weather_time',
     grades: 'ht_grades',
     customNames: 'ht_custom_names',
+    syncUrl: 'ht_sync_url',
+    syncEvents: 'ht_sync_events',
+    syncTime: 'ht_sync_time',
   },
 
   // ── To-Do Daten ──
@@ -234,6 +237,76 @@ const Model = {
     return imported;
   },
 
+  // ── Kalender Sync ──
+
+  getSyncUrl() {
+    return localStorage.getItem(this.STORAGE_KEYS.syncUrl) || '';
+  },
+
+  setSyncUrl(url) {
+    localStorage.setItem(this.STORAGE_KEYS.syncUrl, url || '');
+  },
+
+  getSyncEvents() {
+    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.syncEvents) || '[]');
+  },
+
+  saveSyncEvents(events) {
+    localStorage.setItem(this.STORAGE_KEYS.syncEvents, JSON.stringify(events));
+    localStorage.setItem(this.STORAGE_KEYS.syncTime, Date.now().toString());
+  },
+
+  getLastSyncTime() {
+    var t = localStorage.getItem(this.STORAGE_KEYS.syncTime);
+    return t ? parseInt(t) : 0;
+  },
+
+  clearSyncEvents() {
+    localStorage.removeItem(this.STORAGE_KEYS.syncEvents);
+    localStorage.removeItem(this.STORAGE_KEYS.syncTime);
+    localStorage.removeItem(this.STORAGE_KEYS.syncUrl);
+  },
+
+  syncFromICS(icsText) {
+    var events = this.parseICS(icsText);
+    // Sync-Events separat speichern (überschreibt alte)
+    var syncEvents = events.map(function(ev) {
+      return { text: ev.text, date: ev.date, category: 'arbeit', synced: true };
+    });
+    this.saveSyncEvents(syncEvents);
+    return syncEvents.length;
+  },
+
+  // Tasks + Sync-Events zusammenführen für Kalenderansicht
+  getTasksByDate() {
+    const todos = this.getTodos();
+    const syncEvents = this.getSyncEvents();
+    const map = {};
+
+    todos.forEach(t => {
+      if (t.date) {
+        if (!map[t.date]) map[t.date] = [];
+        map[t.date].push(t);
+      }
+    });
+
+    syncEvents.forEach(ev => {
+      if (ev.date) {
+        if (!map[ev.date]) map[ev.date] = [];
+        map[ev.date].push({
+          id: 'sync_' + ev.date + '_' + ev.text.substring(0, 10),
+          text: ev.text,
+          date: ev.date,
+          category: ev.category || 'arbeit',
+          completed: false,
+          synced: true,
+        });
+      }
+    });
+
+    return map;
+  },
+
   getCategoryData() {
     const todos = this.getTodos();
     const counts = { arbeit: 0, persoenlich: 0, gesundheit: 0, lernen: 0 };
@@ -241,18 +314,6 @@ const Model = {
       if (counts.hasOwnProperty(t.category)) counts[t.category]++;
     });
     return counts;
-  },
-
-  getTasksByDate() {
-    const todos = this.getTodos();
-    const map = {};
-    todos.forEach(t => {
-      if (t.date) {
-        if (!map[t.date]) map[t.date] = [];
-        map[t.date].push(t);
-      }
-    });
-    return map;
   },
 
   // ── Theme ──
@@ -464,6 +525,9 @@ const Model = {
     return gradedEcts > 0 ? (weightedSum / gradedEcts) : null;
   },
 };
+
+
+
 
 
 
