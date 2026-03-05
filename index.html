@@ -3,1161 +3,134 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Habit Tracker — Notion Style</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Habit Tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    /* ═══════════════════ CSS CUSTOM PROPERTIES ═══════════════════ */
-    :root {
-      --font: 'Inter', system-ui, -apple-system, sans-serif;
-    }
-
-    [data-theme="light"] {
-      --bg: #f8f8f7;
-      --bg-card: #ffffff;
-      --bg-input: #f1f1ef;
-      --bg-hover: #f1f1ef;
-      --text: #37352f;
-      --text-secondary: #787774;
-      --text-muted: #b4b4b0;
-      --border: #e9e9e7;
-      --accent: #2eaadc;
-      --accent-light: rgba(46,170,220,0.12);
-      --green: #4dab6f;
-      --green-light: rgba(77,171,111,0.12);
-      --red: #e03e3e;
-      --red-light: rgba(224,62,62,0.12);
-      --orange: #d9730d;
-      --orange-light: rgba(217,115,13,0.12);
-      --purple: #6940a5;
-      --purple-light: rgba(105,64,165,0.12);
-      --yellow: #dfab01;
-      --yellow-light: rgba(223,171,1,0.12);
-      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-      --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
-      --chart-grid: rgba(0,0,0,0.06);
-      --calendar-today: rgba(46,170,220,0.15);
-    }
-
-    [data-theme="dark"] {
-      --bg: #191919;
-      --bg-card: #202020;
-      --bg-input: #2f2f2f;
-      --bg-hover: #2f2f2f;
-      --text: #e6e6e4;
-      --text-secondary: #9b9b97;
-      --text-muted: #5a5a58;
-      --border: #333;
-      --accent: #529cca;
-      --accent-light: rgba(82,156,202,0.18);
-      --green: #4dab6f;
-      --green-light: rgba(77,171,111,0.18);
-      --red: #e06666;
-      --red-light: rgba(224,102,102,0.18);
-      --orange: #d9730d;
-      --orange-light: rgba(217,115,13,0.18);
-      --purple: #9a6dd7;
-      --purple-light: rgba(154,109,215,0.18);
-      --yellow: #dfab01;
-      --yellow-light: rgba(223,171,1,0.18);
-      --shadow: 0 1px 3px rgba(0,0,0,0.25);
-      --shadow-lg: 0 4px 12px rgba(0,0,0,0.35);
-      --chart-grid: rgba(255,255,255,0.08);
-      --calendar-today: rgba(82,156,202,0.22);
-    }
-
-    /* ═══════════════════ RESET & BASE ═══════════════════ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      transition: background 0.3s, color 0.3s;
-      line-height: 1.5;
-    }
-
-    /* ═══════════════════ SCROLLBAR ═══════════════════ */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
-
-    /* ═══════════════════ HEADER ═══════════════════ */
-    .header {
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: var(--shadow);
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .logo {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .logo-icon {
-      width: 28px;
-      height: 28px;
-      background: var(--accent);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .clock {
-      font-size: 32px;
-      font-weight: 300;
-      letter-spacing: 1px;
-      font-variant-numeric: tabular-nums;
-      color: var(--text);
-    }
-
-    .clock-date {
-      font-size: 13px;
-      color: var(--text-secondary);
-      font-weight: 400;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .weather {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--bg-input);
-      padding: 8px 14px;
-      border-radius: 10px;
-      font-size: 14px;
-    }
-
-    .weather-icon { font-size: 24px; }
-    .weather-temp { font-weight: 600; font-size: 18px; }
-    .weather-desc { color: var(--text-secondary); font-size: 12px; }
-
-    .theme-toggle {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg-input);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      transition: all 0.2s;
-      color: var(--text);
-    }
-    .theme-toggle:hover { background: var(--bg-hover); box-shadow: var(--shadow); }
-
-    /* ═══════════════════ MAIN LAYOUT ═══════════════════ */
-    .main {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 24px 32px 48px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto;
-      gap: 24px;
-    }
-
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: var(--shadow);
-      transition: box-shadow 0.2s;
-    }
-    .card:hover { box-shadow: var(--shadow-lg); }
-
-    .card-title {
-      font-size: 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-secondary);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .card-title-icon {
-      font-size: 16px;
-    }
-
-    /* ═══════════════════ TO-DO LIST ═══════════════════ */
-    .todo-input-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .todo-input-row input[type="text"] {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg-input);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 14px;
-      outline: none;
-      transition: border 0.2s;
-    }
-    .todo-input-row input[type="text"]:focus { border-color: var(--accent); }
-
-    .todo-input-row input[type="date"] {
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg-input);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 13px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    .todo-input-row select {
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg-input);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 13px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    .btn {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      font-family: var(--font);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
-    .btn-primary:hover { opacity: 0.85; }
-
-    .todo-filters {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 16px;
-    }
-
-    .filter-btn {
-      padding: 6px 14px;
-      border: none;
-      border-radius: 6px;
-      background: transparent;
-      color: var(--text-secondary);
-      font-family: var(--font);
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .filter-btn:hover { background: var(--bg-hover); }
-    .filter-btn.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
-
-    .todo-list {
-      list-style: none;
-      max-height: 360px;
-      overflow-y: auto;
-    }
-
-    .todo-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      transition: background 0.15s;
-      group: todo;
-    }
-    .todo-item:hover { background: var(--bg-hover); }
-
-    .todo-checkbox {
-      width: 18px;
-      height: 18px;
-      border: 2px solid var(--border);
-      border-radius: 4px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: all 0.2s;
-    }
-    .todo-checkbox:hover { border-color: var(--accent); }
-    .todo-checkbox.checked {
-      background: var(--green);
-      border-color: var(--green);
-    }
-    .todo-checkbox.checked::after {
-      content: '✓';
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .todo-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .todo-text {
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-    .todo-text.completed {
-      text-decoration: line-through;
-      color: var(--text-muted);
-    }
-
-    .todo-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 2px;
-    }
-
-    .todo-tag {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-weight: 500;
-    }
-
-    .tag-arbeit { background: var(--accent-light); color: var(--accent); }
-    .tag-persönlich { background: var(--purple-light); color: var(--purple); }
-    .tag-gesundheit { background: var(--green-light); color: var(--green); }
-    .tag-lernen { background: var(--orange-light); color: var(--orange); }
-
-    .todo-date-label {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .todo-delete {
-      width: 28px;
-      height: 28px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: all 0.15s;
-    }
-    .todo-item:hover .todo-delete { opacity: 1; }
-    .todo-delete:hover { background: var(--red-light); color: var(--red); }
-
-    .todo-empty {
-      text-align: center;
-      color: var(--text-muted);
-      padding: 40px 20px;
-      font-size: 14px;
-    }
-
-    .todo-empty-icon { font-size: 32px; margin-bottom: 8px; }
-
-    /* ═══════════════════ CALENDAR ═══════════════════ */
-    .calendar-nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    .calendar-nav-btn {
-      width: 32px;
-      height: 32px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg-input);
-      color: var(--text);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      transition: all 0.15s;
-    }
-    .calendar-nav-btn:hover { background: var(--bg-hover); }
-
-    .calendar-month-label {
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 2px;
-    }
-
-    .calendar-day-header {
-      text-align: center;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-muted);
-      padding: 8px 0;
-      text-transform: uppercase;
-    }
-
-    .calendar-day {
-      aspect-ratio: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      position: relative;
-      transition: all 0.15s;
-      gap: 2px;
-    }
-    .calendar-day:hover { background: var(--bg-hover); }
-    .calendar-day.today { background: var(--calendar-today); font-weight: 600; }
-    .calendar-day.selected { background: var(--accent); color: #fff; font-weight: 600; }
-    .calendar-day.other-month { color: var(--text-muted); }
-
-    .calendar-dots {
-      display: flex;
-      gap: 2px;
-      position: absolute;
-      bottom: 4px;
-    }
-
-    .calendar-dot {
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-    }
-
-    .dot-arbeit { background: var(--accent); }
-    .dot-persönlich { background: var(--purple); }
-    .dot-gesundheit { background: var(--green); }
-    .dot-lernen { background: var(--orange); }
-    .dot-default { background: var(--text-muted); }
-
-    /* ═══════════════════ CHARTS ═══════════════════ */
-    .charts-row {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-
-    .chart-container {
-      position: relative;
-      height: 260px;
-    }
-
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      grid-column: 1 / -1;
-    }
-
-    .stat-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: var(--shadow);
-    }
-
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -1px;
-    }
-
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .stat-accent { color: var(--accent); }
-    .stat-green { color: var(--green); }
-    .stat-orange { color: var(--orange); }
-    .stat-purple { color: var(--purple); }
-
-    /* ═══════════════════ RESPONSIVE ═══════════════════ */
-    @media (max-width: 900px) {
-      .main {
-        grid-template-columns: 1fr;
-        padding: 16px;
-      }
-      .charts-row {
-        grid-template-columns: 1fr;
-      }
-      .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .header {
-        flex-direction: column;
-        gap: 12px;
-        padding: 12px 16px;
-      }
-      .header-left, .header-right { width: 100%; justify-content: center; }
-    }
-
-    /* ═══════════════════ SR-ONLY ═══════════════════ */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0,0,0,0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    /* ═══════════════════ ANIMATIONS ═══════════════════ */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .todo-item { animation: fadeIn 0.2s ease; }
-  </style>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<!-- ═══════════════════ HEADER ═══════════════════ -->
-<header class="header">
-  <div class="header-left">
-    <div class="logo">
-      <div class="logo-icon">H</div>
-      Habit Tracker
-    </div>
-    <div>
-      <div class="clock" id="clock">--:--:--</div>
-      <div class="clock-date" id="clockDate">---</div>
-    </div>
-  </div>
-  <div class="header-right">
-    <div class="weather" id="weather">
-      <span class="weather-icon">🌤</span>
+  <!-- ════════════ HEADER ════════════ -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <div class="logo-mark">H</div>
+        Habit Tracker
+      </div>
       <div>
-        <div class="weather-temp" id="weatherTemp">--°C</div>
-        <div class="weather-desc" id="weatherDesc">Laden...</div>
+        <div class="clock" id="clock">--:--:--</div>
+        <div class="clock-date" id="clockDate">---</div>
       </div>
     </div>
-    <button class="theme-toggle" id="themeToggle" title="Theme wechseln">🌙</button>
-  </div>
-</header>
-
-<!-- ═══════════════════ STATS ROW ═══════════════════ -->
-<div class="main">
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-value stat-accent" id="statTotal">0</div>
-      <div class="stat-label">Gesamt Tasks</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value stat-green" id="statDone">0</div>
-      <div class="stat-label">Erledigt</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value stat-orange" id="statOpen">0</div>
-      <div class="stat-label">Offen</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value stat-purple" id="statRate">0%</div>
-      <div class="stat-label">Abschlussrate</div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════ TO-DO CARD ═══════════════════ -->
-  <div class="card">
-    <div class="card-title"><span class="card-title-icon">✅</span> To-Do Liste</div>
-    <div class="todo-input-row">
-      <label for="todoInput" class="sr-only">Aufgabe</label>
-      <input type="text" id="todoInput" placeholder="Neue Aufgabe hinzufügen..." />
-      <label for="todoDate" class="sr-only">Datum</label>
-      <input type="date" id="todoDate" />
-      <label for="todoCategory" class="sr-only">Kategorie</label>
-      <select id="todoCategory">
-        <option value="arbeit">💼 Arbeit</option>
-        <option value="persönlich">🏠 Persönlich</option>
-        <option value="gesundheit">💪 Gesundheit</option>
-        <option value="lernen">📚 Lernen</option>
-      </select>
-      <button class="btn btn-primary" id="todoAdd">+</button>
-    </div>
-    <div class="todo-filters">
-      <button class="filter-btn active" data-filter="all">Alle</button>
-      <button class="filter-btn" data-filter="today">Heute</button>
-      <button class="filter-btn" data-filter="open">Offen</button>
-      <button class="filter-btn" data-filter="done">Erledigt</button>
-    </div>
-    <ul class="todo-list" id="todoList"></ul>
-  </div>
-
-  <!-- ═══════════════════ CALENDAR CARD ═══════════════════ -->
-  <div class="card">
-    <div class="card-title"><span class="card-title-icon">📅</span> Kalender</div>
-    <div class="calendar-nav">
-      <button class="calendar-nav-btn" id="calPrev">◀</button>
-      <span class="calendar-month-label" id="calMonthLabel">---</span>
-      <button class="calendar-nav-btn" id="calNext">▶</button>
-    </div>
-    <div class="calendar-grid" id="calendarGrid"></div>
-  </div>
-
-  <!-- ═══════════════════ CHARTS ═══════════════════ -->
-  <div class="charts-row">
-    <div class="card">
-      <div class="card-title"><span class="card-title-icon">📈</span> Wöchentlicher Fortschritt</div>
-      <div class="chart-container">
-        <canvas id="lineChart"></canvas>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="card-title-icon">📊</span> Kategorien Verteilung</div>
-      <div class="chart-container">
-        <canvas id="donutChart"></canvas>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
-<script>
-(function() {
-  'use strict';
-
-  // ── State ──
-  let todos = JSON.parse(localStorage.getItem('ht_todos') || '[]');
-  let currentFilter = 'all';
-  let calYear, calMonth, selectedDate = null;
-  let lineChart, donutChart;
-
-  const now = new Date();
-  calYear = now.getFullYear();
-  calMonth = now.getMonth();
-
-  // ── Helpers ──
-  function saveTodos() {
-    localStorage.setItem('ht_todos', JSON.stringify(todos));
-  }
-
-  function todayStr() {
-    return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(new Date());
-  }
-
-  function formatDateDE(dateStr) {
-    if (!dateStr) return '';
-    const d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
-  }
-
-  function uid() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  }
-
-  // ── Clock ──
-  function updateClock() {
-    const n = new Date();
-    const timeOpts = { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-    const dateOpts = { timeZone: 'Europe/Berlin', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('clock').textContent = n.toLocaleTimeString('de-DE', timeOpts);
-    document.getElementById('clockDate').textContent = n.toLocaleDateString('de-DE', dateOpts);
-  }
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  // ── Weather ──
-  async function fetchWeather() {
-    const cached = localStorage.getItem('ht_weather');
-    const cachedTime = localStorage.getItem('ht_weather_time');
-    if (cached && cachedTime && (Date.now() - parseInt(cachedTime)) < 1800000) {
-      return displayWeather(JSON.parse(cached));
-    }
-    try {
-      const res = await fetch('https://wttr.in/Berlin?format=j1');
-      const data = await res.json();
-      const current = data.current_condition[0];
-      const weather = {
-        temp: current.temp_C,
-        desc: current.lang_de && current.lang_de[0] ? current.lang_de[0].value : current.weatherDesc[0].value,
-        code: parseInt(current.weatherCode)
-      };
-      localStorage.setItem('ht_weather', JSON.stringify(weather));
-      localStorage.setItem('ht_weather_time', Date.now().toString());
-      displayWeather(weather);
-    } catch (e) {
-      document.getElementById('weatherTemp').textContent = '--°C';
-      document.getElementById('weatherDesc').textContent = 'Nicht verfügbar';
-    }
-  }
-
-  function displayWeather(w) {
-    document.getElementById('weatherTemp').textContent = w.temp + '°C';
-    document.getElementById('weatherDesc').textContent = w.desc;
-    const code = w.code;
-    let icon = '🌤';
-    if (code === 113) icon = '☀️';
-    else if (code === 116) icon = '⛅';
-    else if (code === 119 || code === 122) icon = '☁️';
-    else if ([176,263,266,293,296,299,302,305,308,311,314,317,353,356,359].includes(code)) icon = '🌧';
-    else if ([200,386,389,392,395].includes(code)) icon = '⛈';
-    else if ([227,230,323,326,329,332,335,338,350,368,371,374,377].includes(code)) icon = '🌨';
-    else if ([143,248,260].includes(code)) icon = '🌫';
-    document.querySelector('.weather-icon').textContent = icon;
-  }
-  fetchWeather();
-
-  // ── Theme ──
-  const savedTheme = localStorage.getItem('ht_theme') || 'light';
-  document.documentElement.setAttribute('data-theme', savedTheme);
-  updateThemeIcon();
-
-  document.getElementById('themeToggle').addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'light' ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('ht_theme', next);
-    updateThemeIcon();
-    renderCharts();
-  });
-
-  function updateThemeIcon() {
-    const theme = document.documentElement.getAttribute('data-theme');
-    document.getElementById('themeToggle').textContent = theme === 'light' ? '🌙' : '☀️';
-  }
-
-  // ── To-Do CRUD ──
-  function addTodo() {
-    const input = document.getElementById('todoInput');
-    const text = input.value.trim();
-    if (!text) return;
-    const date = document.getElementById('todoDate').value || null;
-    const category = document.getElementById('todoCategory').value;
-    todos.push({ id: uid(), text, date, category, completed: false, createdAt: new Date().toISOString() });
-    saveTodos();
-    input.value = '';
-    renderAll();
-  }
-
-  document.getElementById('todoAdd').addEventListener('click', addTodo);
-  document.getElementById('todoInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addTodo();
-  });
-
-  function toggleTodo(id) {
-    const t = todos.find(x => x.id === id);
-    if (t) { t.completed = !t.completed; saveTodos(); renderAll(); }
-  }
-
-  function deleteTodo(id) {
-    todos = todos.filter(x => x.id !== id);
-    saveTodos();
-    renderAll();
-  }
-
-  // ── Filters ──
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentFilter = btn.dataset.filter;
-      renderTodos();
-    });
-  });
-
-  // ── Render To-Dos ──
-  function getFilteredTodos() {
-    let list = [...todos];
-    if (selectedDate) {
-      list = list.filter(t => t.date === selectedDate);
-    }
-    switch (currentFilter) {
-      case 'today': list = list.filter(t => t.date === todayStr()); break;
-      case 'open': list = list.filter(t => !t.completed); break;
-      case 'done': list = list.filter(t => t.completed); break;
-    }
-    return list.sort((a, b) => a.completed - b.completed || new Date(b.createdAt) - new Date(a.createdAt));
-  }
-
-  function renderTodos() {
-    const list = getFilteredTodos();
-    const ul = document.getElementById('todoList');
-
-    if (list.length === 0) {
-      ul.innerHTML = `<div class="todo-empty"><div class="todo-empty-icon">📋</div>Keine Aufgaben${selectedDate ? ' für diesen Tag' : ''}</div>`;
-      return;
-    }
-
-    ul.innerHTML = list.map(t => `
-      <li class="todo-item">
-        <div class="todo-checkbox ${t.completed ? 'checked' : ''}" data-id="${t.id}"></div>
-        <div class="todo-content">
-          <div class="todo-text ${t.completed ? 'completed' : ''}">${escapeHtml(t.text)}</div>
-          <div class="todo-meta">
-            <span class="todo-tag tag-${t.category}">${categoryLabel(t.category)}</span>
-            ${t.date ? `<span class="todo-date-label">📅 ${formatDateDE(t.date)}</span>` : ''}
-          </div>
+    <div class="header-right">
+      <div class="weather">
+        <span class="weather-icon" id="weatherIcon">--</span>
+        <div>
+          <div class="weather-temp" id="weatherTemp">--</div>
+          <div class="weather-desc" id="weatherDesc">Laden...</div>
         </div>
-        <button class="todo-delete" data-id="${t.id}">✕</button>
-      </li>
-    `).join('');
+      </div>
+      <button class="theme-toggle" id="themeToggle">Dark</button>
+    </div>
+  </header>
 
-    ul.querySelectorAll('.todo-checkbox').forEach(cb => {
-      cb.addEventListener('click', () => toggleTodo(cb.dataset.id));
-    });
-    ul.querySelectorAll('.todo-delete').forEach(btn => {
-      btn.addEventListener('click', () => deleteTodo(btn.dataset.id));
-    });
-  }
+  <!-- ════════════ MAIN ════════════ -->
+  <div class="main">
 
-  function categoryLabel(cat) {
-    const labels = { arbeit: '💼 Arbeit', 'persönlich': '🏠 Persönlich', gesundheit: '💪 Gesundheit', lernen: '📚 Lernen' };
-    return labels[cat] || cat;
-  }
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value stat-accent" id="statTotal">0</div>
+        <div class="stat-label">Gesamt</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value stat-green" id="statDone">0</div>
+        <div class="stat-label">Erledigt</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value stat-orange" id="statOpen">0</div>
+        <div class="stat-label">Offen</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value stat-purple" id="statRate">0%</div>
+        <div class="stat-label">Rate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value stat-green" id="statPoints">0 / 0</div>
+        <div class="stat-label">Punkte</div>
+      </div>
+    </div>
 
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
+    <!-- To-Do -->
+    <div class="card">
+      <div class="card-title">Aufgaben</div>
+      <div class="todo-input-row">
+        <label for="todoInput" class="sr-only">Aufgabe</label>
+        <input type="text" id="todoInput" placeholder="Neue Aufgabe..." />
+        <label for="todoDate" class="sr-only">Datum</label>
+        <input type="date" id="todoDate" />
+        <label for="todoCategory" class="sr-only">Kategorie</label>
+        <select id="todoCategory">
+          <option value="arbeit">Arbeit</option>
+          <option value="persoenlich">Persoenlich</option>
+          <option value="gesundheit">Gesundheit</option>
+          <option value="lernen">Lernen</option>
+        </select>
+        <label for="todoPoints" class="sr-only">Story Points</label>
+        <select id="todoPoints">
+          <option value="1">1 pt</option>
+          <option value="2">2 pt</option>
+          <option value="3">3 pt</option>
+          <option value="5">5 pt</option>
+        </select>
+        <button class="btn btn-primary" id="todoAdd">Hinzufuegen</button>
+      </div>
+      <div class="todo-filters">
+        <button class="filter-btn active" data-filter="all">Alle</button>
+        <button class="filter-btn" data-filter="today">Heute</button>
+        <button class="filter-btn" data-filter="open">Offen</button>
+        <button class="filter-btn" data-filter="done">Erledigt</button>
+      </div>
+      <ul class="todo-list" id="todoList"></ul>
+    </div>
 
-  // ── Calendar ──
-  const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-  const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+    <!-- Kalender -->
+    <div class="card">
+      <div class="card-title">Kalender</div>
+      <div class="calendar-nav">
+        <button class="calendar-nav-btn" id="calPrev">&lt;</button>
+        <span class="calendar-month-label" id="calMonthLabel">---</span>
+        <button class="calendar-nav-btn" id="calNext">&gt;</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
 
-  document.getElementById('calPrev').addEventListener('click', () => {
-    calMonth--;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
-    renderCalendar();
-  });
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-title">Woechentlicher Fortschritt</div>
+        <div class="chart-container">
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Kategorien</div>
+        <div class="chart-container">
+          <canvas id="donutChart"></canvas>
+        </div>
+      </div>
+    </div>
 
-  document.getElementById('calNext').addEventListener('click', () => {
-    calMonth++;
-    if (calMonth > 11) { calMonth = 0; calYear++; }
-    renderCalendar();
-  });
+  </div>
 
-  function renderCalendar() {
-    document.getElementById('calMonthLabel').textContent = `${monthNames[calMonth]} ${calYear}`;
-    const grid = document.getElementById('calendarGrid');
-    grid.innerHTML = '';
-
-    // Day headers
-    dayNames.forEach(d => {
-      const el = document.createElement('div');
-      el.className = 'calendar-day-header';
-      el.textContent = d;
-      grid.appendChild(el);
-    });
-
-    // First day of month (Monday=0 based)
-    const firstDay = new Date(calYear, calMonth, 1);
-    let startWeekday = firstDay.getDay() - 1;
-    if (startWeekday < 0) startWeekday = 6;
-
-    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-    const daysInPrevMonth = new Date(calYear, calMonth, 0).getDate();
-
-    const today = todayStr();
-
-    // Task dates for this month
-    const tasksByDate = {};
-    todos.forEach(t => {
-      if (t.date) {
-        if (!tasksByDate[t.date]) tasksByDate[t.date] = [];
-        tasksByDate[t.date].push(t);
-      }
-    });
-
-    // Previous month days
-    for (let i = startWeekday - 1; i >= 0; i--) {
-      const day = daysInPrevMonth - i;
-      const el = createDayElement(day, true, null, []);
-      grid.appendChild(el);
-    }
-
-    // Current month days
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const isToday = dateStr === today;
-      const isSelected = dateStr === selectedDate;
-      const dayTasks = tasksByDate[dateStr] || [];
-      const el = createDayElement(d, false, dateStr, dayTasks, isToday, isSelected);
-      grid.appendChild(el);
-    }
-
-    // Next month days
-    const totalCells = startWeekday + daysInMonth;
-    const remaining = (7 - (totalCells % 7)) % 7;
-    for (let i = 1; i <= remaining; i++) {
-      const el = createDayElement(i, true, null, []);
-      grid.appendChild(el);
-    }
-  }
-
-  function createDayElement(day, isOther, dateStr, tasks, isToday, isSelected) {
-    const el = document.createElement('div');
-    el.className = 'calendar-day';
-    if (isOther) el.classList.add('other-month');
-    if (isToday) el.classList.add('today');
-    if (isSelected) el.classList.add('selected');
-
-    const num = document.createElement('span');
-    num.textContent = day;
-    el.appendChild(num);
-
-    if (tasks.length > 0) {
-      const dots = document.createElement('div');
-      dots.className = 'calendar-dots';
-      const uniqueCats = [...new Set(tasks.map(t => t.category))].slice(0, 4);
-      uniqueCats.forEach(cat => {
-        const dot = document.createElement('div');
-        dot.className = `calendar-dot dot-${cat || 'default'}`;
-        dots.appendChild(dot);
-      });
-      el.appendChild(dots);
-    }
-
-    if (dateStr) {
-      el.addEventListener('click', () => {
-        if (selectedDate === dateStr) {
-          selectedDate = null;
-        } else {
-          selectedDate = dateStr;
-          document.getElementById('todoDate').value = dateStr;
-        }
-        renderCalendar();
-        renderTodos();
-      });
-    }
-
-    return el;
-  }
-
-  // ── Charts ──
-  function getChartColors() {
-    const style = getComputedStyle(document.documentElement);
-    return {
-      accent: style.getPropertyValue('--accent').trim(),
-      green: style.getPropertyValue('--green').trim(),
-      orange: style.getPropertyValue('--orange').trim(),
-      purple: style.getPropertyValue('--purple').trim(),
-      text: style.getPropertyValue('--text').trim(),
-      textSecondary: style.getPropertyValue('--text-secondary').trim(),
-      grid: style.getPropertyValue('--chart-grid').trim(),
-      accentLight: style.getPropertyValue('--accent-light').trim(),
-    };
-  }
-
-  function renderCharts() {
-    renderLineChart();
-    renderDonutChart();
-    renderStats();
-  }
-
-  function renderStats() {
-    const total = todos.length;
-    const done = todos.filter(t => t.completed).length;
-    const open = total - done;
-    const rate = total > 0 ? Math.round((done / total) * 100) : 0;
-    document.getElementById('statTotal').textContent = total;
-    document.getElementById('statDone').textContent = done;
-    document.getElementById('statOpen').textContent = open;
-    document.getElementById('statRate').textContent = rate + '%';
-  }
-
-  function renderLineChart() {
-    const colors = getChartColors();
-    const labels = [];
-    const data = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const dayLabel = d.toLocaleDateString('de-DE', { weekday: 'short' });
-      labels.push(dayLabel);
-
-      const dayTodos = todos.filter(t => t.date === dateStr);
-      const completed = dayTodos.filter(t => t.completed).length;
-      const total = dayTodos.length;
-      data.push(total > 0 ? Math.round((completed / total) * 100) : 0);
-    }
-
-    const ctx = document.getElementById('lineChart').getContext('2d');
-
-    if (lineChart) lineChart.destroy();
-
-    lineChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Abschlussrate %',
-          data,
-          borderColor: colors.accent,
-          backgroundColor: colors.accentLight,
-          borderWidth: 2.5,
-          pointBackgroundColor: colors.accent,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          tension: 0.4,
-          fill: true,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: colors.text,
-            titleFont: { family: 'Inter' },
-            bodyFont: { family: 'Inter' },
-            callbacks: {
-              label: (ctx) => `${ctx.parsed.y}% erledigt`
-            }
-          }
-        },
-        scales: {
-          y: {
-            min: 0,
-            max: 100,
-            ticks: { color: colors.textSecondary, font: { family: 'Inter', size: 11 }, callback: v => v + '%' },
-            grid: { color: colors.grid }
-          },
-          x: {
-            ticks: { color: colors.textSecondary, font: { family: 'Inter', size: 11 } },
-            grid: { display: false }
-          }
-        }
-      }
-    });
-  }
-
-  function renderDonutChart() {
-    const colors = getChartColors();
-
-    const catCounts = { arbeit: 0, 'persönlich': 0, gesundheit: 0, lernen: 0 };
-    todos.forEach(t => { if (catCounts.hasOwnProperty(t.category)) catCounts[t.category]++; });
-
-    const ctx = document.getElementById('donutChart').getContext('2d');
-
-    if (donutChart) donutChart.destroy();
-
-    const hasData = Object.values(catCounts).some(v => v > 0);
-
-    donutChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['💼 Arbeit', '🏠 Persönlich', '💪 Gesundheit', '📚 Lernen'],
-        datasets: [{
-          data: hasData ? Object.values(catCounts) : [1, 1, 1, 1],
-          backgroundColor: [colors.accent, colors.purple, colors.green, colors.orange],
-          borderWidth: 0,
-          hoverOffset: 8,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '65%',
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              color: colors.textSecondary,
-              font: { family: 'Inter', size: 12 },
-              padding: 16,
-              usePointStyle: true,
-              pointStyleWidth: 10
-            }
-          },
-          tooltip: {
-            backgroundColor: colors.text,
-            titleFont: { family: 'Inter' },
-            bodyFont: { family: 'Inter' },
-            callbacks: {
-              label: (ctx) => {
-                if (!hasData) return 'Keine Daten';
-                return ` ${ctx.parsed} Tasks`;
-              }
-            }
-          }
-        }
-      }
-    });
-  }
-
-  // ── Render All ──
-  function renderAll() {
-    renderTodos();
-    renderCalendar();
-    renderCharts();
-  }
-
-  // ── Set default date to today ──
-  document.getElementById('todoDate').value = todayStr();
-
-  // ── Initial render ──
-  renderAll();
-
-})();
-</script>
+  <!-- MVC Scripts -->
+  <script src="js/model.js"></script>
+  <script src="js/view.js"></script>
+  <script src="js/controller.js"></script>
+  <script>
+    Controller.init();
+  </script>
 </body>
 </html>
-
-
 
