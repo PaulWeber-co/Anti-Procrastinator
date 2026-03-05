@@ -783,18 +783,138 @@ body {
 
 /* ═══════════════════ STUDIENPLAN ═══════════════════ */
 .sp-semester {
-  margin-bottom: 20px;
+  margin-bottom: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
 }
 
-.sp-semester-title {
-  font-size: 12px;
+.sp-semester-done {
+  border-color: var(--green);
+  border-color: rgba(22,163,74,0.25);
+}
+
+.sp-semester-partial {
+  border-color: var(--orange);
+  border-color: rgba(217,119,6,0.25);
+}
+
+.sp-semester-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: var(--bg-input);
+  transition: background 0.15s ease;
+  user-select: none;
+}
+
+.sp-semester-header:hover {
+  background: var(--bg-hover);
+}
+
+.sp-semester-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sp-chevron {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sp-chevron::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--text-secondary);
+  border-bottom: 1.5px solid var(--text-secondary);
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+}
+
+.sp-chevron-open::after {
+  transform: rotate(45deg);
+  top: 3px;
+}
+
+.sp-semester-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sp-semester-done .sp-semester-num {
+  background: var(--green);
+}
+
+.sp-semester-partial .sp-semester-num {
+  background: var(--orange);
+}
+
+.sp-semester-label {
+  font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
+  color: var(--text);
+}
+
+.sp-sem-ects {
+  font-size: 11px;
   color: var(--text-muted);
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+
+.sp-sem-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.sp-sem-badge-done {
+  background: var(--green-light);
+  color: var(--green);
+}
+
+.sp-sem-badge-partial {
+  background: var(--orange-light);
+  color: var(--orange);
+}
+
+.sp-sem-badge-open {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* Accordion content */
+.sp-semester-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.sp-content-open {
+  max-height: 800px;
 }
 
 .sp-table {
@@ -810,19 +930,33 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-muted);
-  padding: 6px 8px;
+  padding: 8px 8px 6px;
   border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
 }
 
-.sp-th-name { width: 30%; }
-.sp-th-ects { width: 8%; text-align: center !important; }
-.sp-th-pruef { width: 26%; }
-.sp-th-wab { width: 6%; text-align: center !important; }
-.sp-th-note { width: 14%; text-align: center !important; }
-.sp-th-status { width: 16%; }
+.sp-th-name { width: 22%; }
+.sp-th-prof { width: 16%; }
+.sp-th-ects { width: 6%; text-align: center !important; }
+.sp-th-pruef { width: 22%; }
+.sp-th-wab { width: 5%; text-align: center !important; }
+.sp-th-note { width: 12%; text-align: center !important; }
+.sp-th-status { width: 14%; }
+
+.sp-module-row {
+  transition: opacity 0.2s ease;
+}
+
+.sp-row-done {
+  opacity: 0.55;
+}
+
+.sp-row-done:hover {
+  opacity: 0.85;
+}
 
 .sp-table tbody td {
-  padding: 8px 8px;
+  padding: 7px 8px;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
   color: var(--text);
@@ -832,6 +966,42 @@ body {
   font-weight: 500;
 }
 
+.sp-name-input,
+.sp-prof-input {
+  width: 100%;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.sp-name-input {
+  font-weight: 500;
+}
+
+.sp-prof-input {
+  font-weight: 400;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.sp-name-input:hover,
+.sp-prof-input:hover {
+  background: var(--bg-input);
+  border-color: var(--border);
+}
+
+.sp-name-input:focus,
+.sp-prof-input:focus {
+  background: var(--bg-input);
+  border-color: var(--accent);
+}
+
 .sp-td-ects {
   text-align: center;
   font-weight: 600;
@@ -839,6 +1009,11 @@ body {
 }
 
 .sp-td-pruef {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.sp-td-prof {
   color: var(--text-secondary);
   font-size: 11px;
 }
@@ -957,6 +1132,7 @@ body {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 
 
 

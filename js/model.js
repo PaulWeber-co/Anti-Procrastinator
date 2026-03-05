@@ -8,6 +8,7 @@ const Model = {
     weather: 'ht_weather',
     weatherTime: 'ht_weather_time',
     grades: 'ht_grades',
+    customNames: 'ht_custom_names',
   },
 
   // ── To-Do Daten ──
@@ -270,7 +271,77 @@ const Model = {
     const average = gradedEcts > 0 ? (weightedSum / gradedEcts) : 0;
     return { totalEcts: totalEcts, completedEcts: completedEcts, average: average, gradedEcts: gradedEcts };
   },
+
+  // ── Custom Names (Modul/Prof umbenennen) ──
+
+  getCustomNames() {
+    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.customNames) || '{}');
+  },
+
+  saveCustomName(key, value) {
+    var names = this.getCustomNames();
+    if (value && value.trim()) {
+      names[key] = value.trim();
+    } else {
+      delete names[key];
+    }
+    localStorage.setItem(this.STORAGE_KEYS.customNames, JSON.stringify(names));
+  },
+
+  getModuleName(mod) {
+    var names = this.getCustomNames();
+    return names['name_' + mod.id] || mod.name;
+  },
+
+  getProfName(mod) {
+    var names = this.getCustomNames();
+    return names['prof_' + mod.id] || mod.verantwortlich || '';
+  },
+
+  // ── Semester-Status ──
+
+  isSemesterComplete(semesterIndex) {
+    var grades = this.getGrades();
+    var sem = this.STUDIENPLAN[semesterIndex];
+    if (!sem) return false;
+    return sem.modules.every(function(mod) {
+      var entry = grades[mod.id];
+      return entry && entry.status === 'bestanden';
+    });
+  },
+
+  getSemesterEcts(semesterIndex) {
+    var grades = this.getGrades();
+    var sem = this.STUDIENPLAN[semesterIndex];
+    if (!sem) return { total: 0, completed: 0 };
+    var total = 0;
+    var completed = 0;
+    sem.modules.forEach(function(mod) {
+      total += mod.ects;
+      var entry = grades[mod.id];
+      if (entry && entry.status === 'bestanden') completed += mod.ects;
+    });
+    return { total: total, completed: completed };
+  },
+
+  getSemesterAverage(semesterIndex) {
+    var grades = this.getGrades();
+    var sem = this.STUDIENPLAN[semesterIndex];
+    if (!sem) return null;
+    var weightedSum = 0;
+    var gradedEcts = 0;
+    sem.modules.forEach(function(mod) {
+      var entry = grades[mod.id];
+      if (entry && entry.status === 'bestanden' && entry.grade && entry.grade > 0) {
+        weightedSum += entry.grade * mod.ects;
+        gradedEcts += mod.ects;
+      }
+    });
+    return gradedEcts > 0 ? (weightedSum / gradedEcts) : null;
+  },
 };
+
+
 
 
 

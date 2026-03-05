@@ -287,29 +287,80 @@ const Controller = {
   _renderStudienplan() {
     var self = this;
     var grades = Model.getGrades();
-    View.renderStudienplan(Model.STUDIENPLAN, grades);
+    var customNames = Model.getCustomNames();
+    View.renderStudienplan(Model.STUDIENPLAN, grades, customNames);
     View.renderStudienplanStats(Model.getStudienplanStats());
 
+    // Accordion toggle
+    document.querySelectorAll('.sp-semester-header').forEach(function(header) {
+      header.addEventListener('click', function() {
+        var content = header.nextElementSibling;
+        var chevron = header.querySelector('.sp-chevron');
+        if (content.classList.contains('sp-content-open')) {
+          content.classList.remove('sp-content-open');
+          chevron.classList.remove('sp-chevron-open');
+        } else {
+          content.classList.add('sp-content-open');
+          chevron.classList.add('sp-chevron-open');
+        }
+      });
+    });
+
+    // Grade inputs
     document.querySelectorAll('.sp-grade-input').forEach(function(input) {
       input.addEventListener('change', function() {
         var moduleId = input.dataset.module;
         var selectEl = document.querySelector('.sp-status-select[data-module="' + moduleId + '"]');
         var status = selectEl ? selectEl.value : 'offen';
         Model.saveGrade(moduleId, input.value, status);
-        View.renderStudienplanStats(Model.getStudienplanStats());
-        self._updateStatusClasses();
+        self._refreshStudienplan();
       });
     });
 
+    // Status selects
     document.querySelectorAll('.sp-status-select').forEach(function(select) {
       select.addEventListener('change', function() {
         var moduleId = select.dataset.module;
         var gradeInput = document.querySelector('.sp-grade-input[data-module="' + moduleId + '"]');
         var grade = gradeInput ? gradeInput.value : '';
         Model.saveGrade(moduleId, grade, select.value);
-        View.renderStudienplanStats(Model.getStudienplanStats());
-        self._updateStatusClasses();
+        self._refreshStudienplan();
       });
+    });
+
+    // Custom module name inputs
+    document.querySelectorAll('.sp-name-input').forEach(function(input) {
+      input.addEventListener('change', function() {
+        Model.saveCustomName(input.dataset.nameKey, input.value);
+      });
+    });
+
+    // Custom prof name inputs
+    document.querySelectorAll('.sp-prof-input').forEach(function(input) {
+      input.addEventListener('change', function() {
+        Model.saveCustomName(input.dataset.nameKey, input.value);
+      });
+    });
+  },
+
+  _refreshStudienplan() {
+    // Merke welche Semester offen sind
+    var openSemesters = [];
+    document.querySelectorAll('.sp-semester-content.sp-content-open').forEach(function(el) {
+      var parent = el.closest('.sp-semester');
+      if (parent) openSemesters.push(parent.dataset.semester);
+    });
+
+    this._renderStudienplan();
+
+    // Stelle den open-State wieder her
+    openSemesters.forEach(function(idx) {
+      var content = document.querySelector('.sp-semester[data-semester="' + idx + '"] .sp-semester-content');
+      var chevron = document.querySelector('.sp-semester[data-semester="' + idx + '"] .sp-chevron');
+      if (content && !content.classList.contains('sp-content-open')) {
+        content.classList.add('sp-content-open');
+        if (chevron) chevron.classList.add('sp-chevron-open');
+      }
     });
   },
 
@@ -322,6 +373,7 @@ const Controller = {
     });
   },
 };
+
 
 
 

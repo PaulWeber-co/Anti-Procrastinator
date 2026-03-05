@@ -388,16 +388,51 @@ const View = {
 
   // ── Studienplan ──
 
-  renderStudienplan(semesters, grades) {
-    const body = this.el('studienplanBody');
-    let html = '';
+  renderStudienplan(semesters, grades, customNames) {
+    var body = this.el('studienplanBody');
+    var html = '';
+    var self = this;
 
-    semesters.forEach(function(sem) {
-      html += '<div class="sp-semester">';
-      html += '<div class="sp-semester-title">' + sem.semester + '. Semester</div>';
+    semesters.forEach(function(sem, idx) {
+      var semEcts = Model.getSemesterEcts(idx);
+      var semAvg = Model.getSemesterAverage(idx);
+      var isComplete = Model.isSemesterComplete(idx);
+      var isOpen = !isComplete;
+
+      // Semester status badge
+      var statusBadge = '';
+      var statusClass = '';
+      if (isComplete) {
+        statusBadge = '<span class="sp-sem-badge sp-sem-badge-done">'
+          + (semAvg !== null ? semAvg.toFixed(1) : '--') + '</span>';
+        statusClass = ' sp-semester-done';
+      } else if (semEcts.completed > 0) {
+        statusBadge = '<span class="sp-sem-badge sp-sem-badge-partial">'
+          + semEcts.completed + ' / ' + semEcts.total + '</span>';
+        statusClass = ' sp-semester-partial';
+      } else {
+        statusBadge = '<span class="sp-sem-badge sp-sem-badge-open">'
+          + semEcts.total + ' ECTS</span>';
+      }
+
+      var ectsInfo = '<span class="sp-sem-ects">' + semEcts.completed + ' / ' + semEcts.total + ' ECTS</span>';
+
+      html += '<div class="sp-semester' + statusClass + '" data-semester="' + idx + '">';
+      html += '<div class="sp-semester-header" data-semester-toggle="' + idx + '">'
+        + '<div class="sp-semester-header-left">'
+          + '<span class="sp-chevron' + (isOpen ? ' sp-chevron-open' : '') + '"></span>'
+          + '<span class="sp-semester-num">' + sem.semester + '</span>'
+          + '<span class="sp-semester-label">' + sem.semester + '. Semester</span>'
+          + ectsInfo
+        + '</div>'
+        + statusBadge
+        + '</div>';
+
+      html += '<div class="sp-semester-content' + (isOpen ? ' sp-content-open' : '') + '">';
       html += '<table class="sp-table">';
       html += '<thead><tr>'
         + '<th class="sp-th-name">Modul</th>'
+        + '<th class="sp-th-prof">Verantwortlich</th>'
         + '<th class="sp-th-ects">ECTS</th>'
         + '<th class="sp-th-pruef">Pruefung</th>'
         + '<th class="sp-th-wab">WAB</th>'
@@ -406,21 +441,26 @@ const View = {
         + '</tr></thead><tbody>';
 
       sem.modules.forEach(function(mod) {
-        const entry = grades[mod.id] || {};
-        const gradeVal = entry.grade || '';
-        const status = entry.status || 'offen';
+        var entry = grades[mod.id] || {};
+        var gradeVal = entry.grade || '';
+        var status = entry.status || 'offen';
+        var customModName = Model.getModuleName(mod);
+        var customProfName = Model.getProfName(mod);
 
-        let statusClass = 'sp-status-offen';
+        var statusClass = 'sp-status-offen';
         if (status === 'bestanden') statusClass = 'sp-status-bestanden';
         else if (status === 'nicht-bestanden') statusClass = 'sp-status-nb';
 
-        let nameExtra = '';
+        var rowClass = status === 'bestanden' ? ' sp-row-done' : '';
+
+        var nameExtra = '';
         if (mod.wahloptionen) {
           nameExtra = '<div class="sp-wahloptionen">' + mod.wahloptionen.join(' / ') + '</div>';
         }
 
-        html += '<tr>'
-          + '<td class="sp-td-name">' + mod.name + nameExtra + '</td>'
+        html += '<tr class="sp-module-row' + rowClass + '">'
+          + '<td class="sp-td-name"><input type="text" class="sp-name-input" data-name-key="name_' + mod.id + '" value="' + self._escapeAttr(customModName) + '">' + nameExtra + '</td>'
+          + '<td class="sp-td-prof"><input type="text" class="sp-prof-input" data-name-key="prof_' + mod.id + '" value="' + self._escapeAttr(customProfName) + '" placeholder="--"></td>'
           + '<td class="sp-td-ects">' + mod.ects + '</td>'
           + '<td class="sp-td-pruef">' + mod.pruefung + '</td>'
           + '<td class="sp-td-wab">' + (mod.wab ? 'Ja' : '--') + '</td>'
@@ -433,10 +473,14 @@ const View = {
           + '</tr>';
       });
 
-      html += '</tbody></table></div>';
+      html += '</tbody></table></div></div>';
     });
 
     body.innerHTML = html;
+  },
+
+  _escapeAttr(str) {
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   },
 
   renderStudienplanStats(stats) {
@@ -455,6 +499,7 @@ const View = {
     this.el('studienplanOverlay').classList.remove('visible');
   },
 };
+
 
 
 
