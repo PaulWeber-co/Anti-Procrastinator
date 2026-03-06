@@ -1654,10 +1654,15 @@ body {
 
 .sp-progress-fill {
   height: 100%;
+  width: 0%;
   background: var(--text);
   border-radius: 0;
   transition: width 0.4s ease;
 }
+
+/* Utility */
+.sync-hidden { display: none; }
+.lofi-label-active { color: var(--calendar-selected); }
 
 @keyframes modalIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -1828,6 +1833,7 @@ body {
   background: var(--red);
   color: #fff;
 }
+
 
 
 

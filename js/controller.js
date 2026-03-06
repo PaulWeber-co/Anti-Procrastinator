@@ -87,14 +87,14 @@ const Controller = {
         frame.contentWindow.postMessage('stop', '*');
         btn.classList.remove('lofi-playing');
         label.textContent = 'LOFI';
-        label.style.color = '';
+        label.classList.remove('lofi-label-active');
         self.lofiPlaying = false;
       } else {
         // Play — postMessage an sandboxed iframe
         frame.contentWindow.postMessage('play', '*');
         btn.classList.add('lofi-playing');
         label.textContent = 'LIVE';
-        label.style.color = 'var(--calendar-selected)';
+        label.classList.add('lofi-label-active');
         self.lofiPlaying = true;
       }
     });
@@ -418,10 +418,10 @@ const Controller = {
     }
 
     if (syncEvents.length > 0) {
-      eventsSection.style.display = 'block';
+      eventsSection.classList.remove('sync-hidden');
       eventsCount.textContent = syncEvents.length + ' Termine synchronisiert';
     } else {
-      eventsSection.style.display = 'none';
+      eventsSection.classList.add('sync-hidden');
     }
   },
 
@@ -628,6 +628,8 @@ const Controller = {
     });
   },
 };
+
+
 
 
 

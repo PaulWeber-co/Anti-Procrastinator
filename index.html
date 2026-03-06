@@ -66,7 +66,7 @@
           <span class="sp-avg-value" id="spEctsComplete">0 / 180</span>
         </div>
         <div class="sp-progress-bar">
-          <div class="sp-progress-fill" id="spProgressFill" style="width:0%"></div>
+          <div class="sp-progress-fill" id="spProgressFill"></div>
         </div>
       </div>
     </div>
@@ -200,7 +200,7 @@
           </div>
 
           <!-- Importierte Events -->
-          <div class="sync-section" id="syncEventsSection" style="display:none">
+          <div class="sync-section sync-hidden" id="syncEventsSection">
             <div class="sync-section-title">Synchronisierte Termine</div>
             <div class="sync-events-count" id="syncEventsCount"></div>
             <button class="btn sync-clear-btn" id="syncClearBtn">Sync-Termine löschen</button>
@@ -240,13 +240,12 @@
   <script src="js/model.js"></script>
   <script src="js/view.js"></script>
   <script src="js/controller.js"></script>
-  <script>
-    Storage.init(function() {
-      Controller.init();
-    });
-  </script>
+  <script src="js/init.js"></script>
 </body>
 </html>
+
+
+
 
 
 
