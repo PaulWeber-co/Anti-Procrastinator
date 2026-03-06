@@ -75,61 +75,27 @@ const Controller = {
 
   // ── Lofi Player ──
 
-  lofiYTPlayer: null,
-  lofiReady: false,
-
   _initLofi() {
     var self = this;
     var btn = View.el('lofiBtn');
     var label = View.el('lofiLabel');
-
-    // YouTube IFrame API laden
-    var tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-
-    window.onYouTubeIframeAPIReady = function() {
-      self.lofiYTPlayer = new YT.Player('lofiEmbed', {
-        height: '1',
-        width: '1',
-        videoId: 'jfKfPfyJRdk',
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          disablekb: 1,
-          fs: 0,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1,
-        },
-        events: {
-          onReady: function() {
-            self.lofiReady = true;
-          },
-          onStateChange: function(event) {
-            // YT.PlayerState.PLAYING = 1, PAUSED = 2, ENDED = 0
-            if (event.data === 1) {
-              btn.classList.add('lofi-playing');
-              label.textContent = 'LIVE';
-              label.style.color = 'var(--calendar-selected)';
-              self.lofiPlaying = true;
-            } else if (event.data === 2 || event.data === 0) {
-              btn.classList.remove('lofi-playing');
-              label.textContent = 'LOFI';
-              label.style.color = '';
-              self.lofiPlaying = false;
-            }
-          },
-        },
-      });
-    };
+    var frame = document.getElementById('lofiFrame');
 
     btn.addEventListener('click', function() {
-      if (!self.lofiReady || !self.lofiYTPlayer) return;
       if (self.lofiPlaying) {
-        self.lofiYTPlayer.pauseVideo();
+        // Stop — iframe src leeren
+        frame.contentWindow.postMessage('stop', '*');
+        btn.classList.remove('lofi-playing');
+        label.textContent = 'LOFI';
+        label.style.color = '';
+        self.lofiPlaying = false;
       } else {
-        self.lofiYTPlayer.playVideo();
+        // Play — postMessage an sandboxed iframe
+        frame.contentWindow.postMessage('play', '*');
+        btn.classList.add('lofi-playing');
+        label.textContent = 'LIVE';
+        label.style.color = 'var(--calendar-selected)';
+        self.lofiPlaying = true;
       }
     });
   },
@@ -204,25 +170,60 @@ const Controller = {
 
   _getCoordinates() {
     return new Promise(function(resolve) {
+      var fallback = { lat: 52.52, lon: 13.41, city: 'Berlin' };
+      var resolved = false;
+
+      function done(coords) {
+        if (!resolved) {
+          resolved = true;
+          resolve(coords);
+        }
+      }
+
+      // Timeout: nach 3s Fallback verwenden
+      setTimeout(function() { done(fallback); }, 3000);
+
       // Versuch 1: Browser Geolocation API
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          function(pos) {
-            resolve({
-              lat: pos.coords.latitude.toFixed(2),
-              lon: pos.coords.longitude.toFixed(2),
-              city: 'Mein Standort',
-            });
-          },
-          function() {
-            // Geolocation abgelehnt oder fehlgeschlagen — Fallback Berlin
-            resolve({ lat: 52.52, lon: 13.41, city: 'Berlin' });
-          },
-          { timeout: 5000 }
-        );
+        try {
+          navigator.geolocation.getCurrentPosition(
+            function(pos) {
+              done({
+                lat: pos.coords.latitude.toFixed(2),
+                lon: pos.coords.longitude.toFixed(2),
+                city: 'Mein Standort',
+              });
+            },
+            function() {
+              // Versuch 2: IP-basierte Geolocation
+              fetch('https://ipapi.co/json/')
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                  if (d.latitude && d.longitude) {
+                    done({ lat: d.latitude, lon: d.longitude, city: d.city || 'Unbekannt' });
+                  } else {
+                    done(fallback);
+                  }
+                })
+                .catch(function() { done(fallback); });
+            },
+            { timeout: 2000 }
+          );
+        } catch (e) {
+          done(fallback);
+        }
       } else {
-        // Kein Geolocation verfügbar — Fallback Berlin
-        resolve({ lat: 52.52, lon: 13.41, city: 'Berlin' });
+        // Kein Geolocation — IP-Fallback
+        fetch('https://ipapi.co/json/')
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.latitude && d.longitude) {
+              done({ lat: d.latitude, lon: d.longitude, city: d.city || 'Unbekannt' });
+            } else {
+              done(fallback);
+            }
+          })
+          .catch(function() { done(fallback); });
       }
     });
   },
@@ -627,6 +628,8 @@ const Controller = {
     });
   },
 };
+
+
 
 
 

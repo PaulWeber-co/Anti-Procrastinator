@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anti Procrastinator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/chart.min.js"></script>
 </head>
 <body>
 
@@ -30,7 +31,7 @@
           <span class="lofi-icon" id="lofiIcon"></span>
         </button>
         <div class="lofi-label" id="lofiLabel">LOFI</div>
-        <div class="lofi-embed" id="lofiEmbed"></div>
+        <iframe id="lofiFrame" class="lofi-embed" sandbox="allow-scripts allow-same-origin allow-popups" src="lofi.html"></iframe>
       </div>
       <div class="weather">
         <span class="weather-icon" id="weatherIcon">--</span>
@@ -246,6 +247,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 

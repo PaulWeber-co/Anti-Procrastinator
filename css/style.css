@@ -379,11 +379,6 @@ body {
   height: 2px;
   overflow: hidden;
   z-index: -1;
-}
-
-.lofi-embed iframe {
-  width: 2px;
-  height: 2px;
   border: 0;
 }
 
@@ -1833,6 +1828,7 @@ body {
   background: var(--red);
   color: #fff;
 }
+
 
 
 
