@@ -1,5 +1,6 @@
 /**
- * MODEL — Datenlogik & localStorage-Persistenz
+ * MODEL — Datenlogik & Storage-Persistenz
+ * Nutzt den Storage-Layer (chrome.storage in Extensions, localStorage im Browser).
  */
 const Model = {
   STORAGE_KEYS: {
@@ -17,11 +18,11 @@ const Model = {
   // ── To-Do Daten ──
 
   getTodos() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.todos) || '[]');
+    return JSON.parse(Storage.get(this.STORAGE_KEYS.todos) || '[]');
   },
 
   saveTodos(todos) {
-    localStorage.setItem(this.STORAGE_KEYS.todos, JSON.stringify(todos));
+    Storage.set(this.STORAGE_KEYS.todos, JSON.stringify(todos));
   },
 
   addTodo(text, date, category, points) {
@@ -240,31 +241,31 @@ const Model = {
   // ── Kalender Sync ──
 
   getSyncUrl() {
-    return localStorage.getItem(this.STORAGE_KEYS.syncUrl) || '';
+    return Storage.get(this.STORAGE_KEYS.syncUrl) || '';
   },
 
   setSyncUrl(url) {
-    localStorage.setItem(this.STORAGE_KEYS.syncUrl, url || '');
+    Storage.set(this.STORAGE_KEYS.syncUrl, url || '');
   },
 
   getSyncEvents() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.syncEvents) || '[]');
+    return JSON.parse(Storage.get(this.STORAGE_KEYS.syncEvents) || '[]');
   },
 
   saveSyncEvents(events) {
-    localStorage.setItem(this.STORAGE_KEYS.syncEvents, JSON.stringify(events));
-    localStorage.setItem(this.STORAGE_KEYS.syncTime, Date.now().toString());
+    Storage.set(this.STORAGE_KEYS.syncEvents, JSON.stringify(events));
+    Storage.set(this.STORAGE_KEYS.syncTime, Date.now().toString());
   },
 
   getLastSyncTime() {
-    var t = localStorage.getItem(this.STORAGE_KEYS.syncTime);
+    var t = Storage.get(this.STORAGE_KEYS.syncTime);
     return t ? parseInt(t) : 0;
   },
 
   clearSyncEvents() {
-    localStorage.removeItem(this.STORAGE_KEYS.syncEvents);
-    localStorage.removeItem(this.STORAGE_KEYS.syncTime);
-    localStorage.removeItem(this.STORAGE_KEYS.syncUrl);
+    Storage.remove(this.STORAGE_KEYS.syncEvents);
+    Storage.remove(this.STORAGE_KEYS.syncTime);
+    Storage.remove(this.STORAGE_KEYS.syncUrl);
   },
 
   syncFromICS(icsText) {
@@ -311,7 +312,7 @@ const Model = {
     const todos = this.getTodos();
     const counts = { arbeit: 0, persoenlich: 0, gesundheit: 0, lernen: 0 };
     todos.forEach(t => {
-      if (counts.hasOwnProperty(t.category)) counts[t.category]++;
+      if (Object.prototype.hasOwnProperty.call(counts, t.category)) counts[t.category]++;
     });
     return counts;
   },
@@ -319,18 +320,18 @@ const Model = {
   // ── Theme ──
 
   getTheme() {
-    return localStorage.getItem(this.STORAGE_KEYS.theme) || 'light';
+    return Storage.get(this.STORAGE_KEYS.theme) || 'light';
   },
 
   setTheme(theme) {
-    localStorage.setItem(this.STORAGE_KEYS.theme, theme);
+    Storage.set(this.STORAGE_KEYS.theme, theme);
   },
 
   // ── Wetter (Cache) ──
 
   getCachedWeather() {
-    const cached = localStorage.getItem(this.STORAGE_KEYS.weather);
-    const cachedTime = localStorage.getItem(this.STORAGE_KEYS.weatherTime);
+    const cached = Storage.get(this.STORAGE_KEYS.weather);
+    const cachedTime = Storage.get(this.STORAGE_KEYS.weatherTime);
     if (cached && cachedTime && (Date.now() - parseInt(cachedTime)) < 1800000) {
       return JSON.parse(cached);
     }
@@ -338,8 +339,8 @@ const Model = {
   },
 
   cacheWeather(data) {
-    localStorage.setItem(this.STORAGE_KEYS.weather, JSON.stringify(data));
-    localStorage.setItem(this.STORAGE_KEYS.weatherTime, Date.now().toString());
+    Storage.set(this.STORAGE_KEYS.weather, JSON.stringify(data));
+    Storage.set(this.STORAGE_KEYS.weatherTime, Date.now().toString());
   },
 
   // ── Hilfsfunktionen ──
@@ -423,13 +424,13 @@ const Model = {
   ],
 
   getGrades() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.grades) || '{}');
+    return JSON.parse(Storage.get(this.STORAGE_KEYS.grades) || '{}');
   },
 
   saveGrade(moduleId, grade, status) {
     const grades = this.getGrades();
     grades[moduleId] = { grade: parseFloat(grade) || null, status: status || 'offen' };
-    localStorage.setItem(this.STORAGE_KEYS.grades, JSON.stringify(grades));
+    Storage.set(this.STORAGE_KEYS.grades, JSON.stringify(grades));
   },
 
   getStudienplanStats() {
@@ -460,7 +461,7 @@ const Model = {
   // ── Custom Names (Modul/Prof umbenennen) ──
 
   getCustomNames() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.customNames) || '{}');
+    return JSON.parse(Storage.get(this.STORAGE_KEYS.customNames) || '{}');
   },
 
   saveCustomName(key, value) {
@@ -470,7 +471,7 @@ const Model = {
     } else {
       delete names[key];
     }
-    localStorage.setItem(this.STORAGE_KEYS.customNames, JSON.stringify(names));
+    Storage.set(this.STORAGE_KEYS.customNames, JSON.stringify(names));
   },
 
   getModuleName(mod) {
@@ -525,13 +526,4 @@ const Model = {
     return gradedEcts > 0 ? (weightedSum / gradedEcts) : null;
   },
 };
-
-
-
-
-
-
-
-
-
 
