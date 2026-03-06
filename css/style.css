@@ -379,6 +379,11 @@ body {
   height: 2px;
   overflow: hidden;
   z-index: -1;
+}
+
+.lofi-embed iframe {
+  width: 2px;
+  height: 2px;
   border: 0;
 }
 
@@ -1833,6 +1838,234 @@ body {
   background: var(--red);
   color: #fff;
 }
+
+/* ═══════════════════ PLANER MODE SELECT ═══════════════════ */
+.planer-mode-select {
+  padding: 40px 28px;
+  text-align: center;
+}
+
+.planer-mode-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-bottom: 28px;
+}
+
+.planer-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.planer-mode-btn {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  padding: 24px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.planer-mode-btn:hover {
+  border-color: var(--text);
+  background: var(--bg-hover);
+}
+
+.planer-mode-icon {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.planer-mode-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.planer-mode-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.planer-mode-hint {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  margin-top: 20px;
+  letter-spacing: 0.5px;
+}
+
+.planer-footer-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.planer-add-period-btn,
+.planer-reset-btn {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.planer-add-period-btn:hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.planer-reset-btn:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.sp-add-module-btn {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px dashed var(--border-dashed);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sp-add-module-btn:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.sp-mod-delete,
+.sp-period-delete {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 6px;
+  transition: color 0.15s ease;
+}
+
+.sp-mod-delete:hover,
+.sp-period-delete:hover {
+  color: var(--red);
+}
+
+.sp-th-del { width: 30px; }
+.sp-td-del { text-align: center; }
+
+.sp-semester-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sp-ects-input,
+.sp-pruef-input {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  transition: border-color 0.15s ease;
+}
+
+.sp-ects-input { width: 50px; text-align: center; }
+
+.sp-ects-input:focus,
+.sp-pruef-input:focus {
+  border-color: var(--border);
+  outline: none;
+  background: var(--bg-input);
+}
+
+/* ═══════════════════ CONFIRM MODAL ═══════════════════ */
+.confirm-modal {
+  max-width: 360px;
+  padding: 28px;
+  text-align: center;
+}
+
+.confirm-text {
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 22px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.confirm-cancel,
+.confirm-ok {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 8px 20px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.confirm-cancel {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.confirm-cancel:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.confirm-ok {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.confirm-ok:hover {
+  opacity: 0.85;
+}
+
+
+
 
 
 

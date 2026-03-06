@@ -31,7 +31,6 @@
           <span class="lofi-icon" id="lofiIcon"></span>
         </button>
         <div class="lofi-label" id="lofiLabel">LOFI</div>
-        <iframe id="lofiFrame" class="lofi-embed" sandbox="allow-scripts allow-same-origin allow-popups" src="lofi.html"></iframe>
       </div>
       <div class="weather">
         <span class="weather-icon" id="weatherIcon">--</span>
@@ -40,34 +39,74 @@
           <div class="weather-desc" id="weatherDesc">Laden...</div>
         </div>
       </div>
-      <button class="btn-header" id="studienplanBtn">Studienplan</button>
+      <button class="btn-header" id="studienplanBtn">Planer</button>
       <button class="theme-toggle" id="themeToggle">Dark</button>
     </div>
   </header>
 
-  <!-- ════════════ STUDIENPLAN MODAL ════════════ -->
+  <!-- ════════════ PLANER MODAL ════════════ -->
   <div class="modal-overlay" id="studienplanOverlay">
     <div class="modal">
       <div class="modal-header">
         <div>
-          <div class="modal-title">Studienplan Informatik B.Sc.</div>
-          <div class="modal-subtitle" id="studienplanSummary">0 / 180 ECTS</div>
+          <div class="modal-title" id="planerTitle">Planer</div>
+          <div class="modal-subtitle" id="studienplanSummary"></div>
         </div>
         <button class="modal-close" id="studienplanClose">x</button>
       </div>
-      <div class="modal-body" id="studienplanBody"></div>
-      <div class="modal-footer">
+
+      <!-- Modus-Auswahl (nur sichtbar wenn noch kein Modus gewählt) -->
+      <div class="planer-mode-select" id="planerModeSelect">
+        <div class="planer-mode-title">Wähle deinen Planer-Typ</div>
+        <div class="planer-mode-grid">
+          <button class="planer-mode-btn" data-mode="schule">
+            <div class="planer-mode-icon">S</div>
+            <div class="planer-mode-label">Schule</div>
+            <div class="planer-mode-desc">Klassen, Fächer, Schulnoten (1-6)</div>
+          </button>
+          <button class="planer-mode-btn" data-mode="uni">
+            <div class="planer-mode-icon">U</div>
+            <div class="planer-mode-label">Universität</div>
+            <div class="planer-mode-desc">Semester, Module, ECTS, Noten (1.0-5.0)</div>
+          </button>
+          <button class="planer-mode-btn" data-mode="provadis">
+            <div class="planer-mode-icon">P</div>
+            <div class="planer-mode-label">Provadis</div>
+            <div class="planer-mode-desc">Informatik B.Sc. — alle Module vorausgefüllt</div>
+          </button>
+        </div>
+        <div class="planer-mode-hint">Du kannst den Modus später unter dem Planer ändern.</div>
+      </div>
+
+      <!-- Planer-Body (wird dynamisch befüllt) -->
+      <div class="modal-body sync-hidden" id="studienplanBody"></div>
+      <div class="modal-footer sync-hidden" id="planerFooter">
         <div class="sp-avg-row">
           <span class="sp-avg-label">Gewichteter Notendurchschnitt</span>
           <span class="sp-avg-value" id="spAverage">--</span>
         </div>
         <div class="sp-avg-row">
-          <span class="sp-avg-label">ECTS abgeschlossen</span>
-          <span class="sp-avg-value" id="spEctsComplete">0 / 180</span>
+          <span class="sp-avg-label" id="planerPointsLabel">ECTS abgeschlossen</span>
+          <span class="sp-avg-value" id="spEctsComplete">0 / 0</span>
         </div>
         <div class="sp-progress-bar">
           <div class="sp-progress-fill" id="spProgressFill"></div>
         </div>
+        <div class="planer-footer-actions">
+          <button class="btn planer-add-period-btn" id="planerAddPeriod">+ Zeitraum hinzufügen</button>
+          <button class="btn planer-reset-btn" id="planerReset">Modus ändern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ CONFIRM MODAL ════════════ -->
+  <div class="modal-overlay sync-hidden" id="confirmOverlay">
+    <div class="modal confirm-modal">
+      <div class="confirm-text" id="confirmText">Bist du sicher?</div>
+      <div class="confirm-actions">
+        <button class="btn confirm-cancel" id="confirmCancel">Abbrechen</button>
+        <button class="btn confirm-ok" id="confirmOk">Bestätigen</button>
       </div>
     </div>
   </div>
@@ -243,20 +282,3 @@
   <script src="js/init.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

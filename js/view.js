@@ -415,110 +415,122 @@ const View = {
     return div.innerHTML;
   },
 
-  // ── Studienplan ──
+  _escapeAttr(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  },
 
-  renderStudienplan(semesters, grades, customNames) {
+  // ── Planer ──
+
+  renderPlaner(data, grades, mode) {
     var body = this.el('studienplanBody');
-    var html = '';
+    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.uni;
     var self = this;
+    var html = '';
+    var periodLabel = config.periodLabel;
+    var isSchule = mode === 'schule';
 
-    semesters.forEach(function(sem, idx) {
-      var semEcts = Model.getSemesterEcts(idx);
-      var semAvg = Model.getSemesterAverage(idx);
-      var isComplete = Model.isSemesterComplete(idx);
+    data.forEach(function(period, idx) {
+      var pStats = Model.getPeriodStats(idx);
+      var isComplete = Model.isPeriodComplete(idx);
       var isOpen = !isComplete;
 
-      // Semester status badge
       var statusBadge = '';
       var statusClass = '';
       if (isComplete) {
-        statusBadge = '<span class="sp-sem-badge sp-sem-badge-done">'
-          + (semAvg !== null ? semAvg.toFixed(1) : '--') + '</span>';
+        statusBadge = '<span class="sp-sem-badge sp-sem-badge-done">' + (pStats.avg !== null ? pStats.avg.toFixed(1) : '--') + '</span>';
         statusClass = ' sp-semester-done';
-      } else if (semEcts.completed > 0) {
-        statusBadge = '<span class="sp-sem-badge sp-sem-badge-partial">'
-          + semEcts.completed + ' / ' + semEcts.total + '</span>';
+      } else if (pStats.completed > 0) {
+        var info = config.hasEcts ? (pStats.completed + ' / ' + pStats.total) : (pStats.completed + ' / ' + pStats.total);
+        statusBadge = '<span class="sp-sem-badge sp-sem-badge-partial">' + info + '</span>';
         statusClass = ' sp-semester-partial';
       } else {
-        statusBadge = '<span class="sp-sem-badge sp-sem-badge-open">'
-          + semEcts.total + ' ECTS</span>';
+        statusBadge = '<span class="sp-sem-badge sp-sem-badge-open">' + (config.hasEcts ? pStats.total + ' ECTS' : pStats.total + ' Fächer') + '</span>';
       }
-
-      var ectsInfo = '<span class="sp-sem-ects">' + semEcts.completed + ' / ' + semEcts.total + ' ECTS</span>';
 
       html += '<div class="sp-semester' + statusClass + '" data-semester="' + idx + '">';
       html += '<div class="sp-semester-header" data-semester-toggle="' + idx + '">'
         + '<div class="sp-semester-header-left">'
           + '<span class="sp-chevron' + (isOpen ? ' sp-chevron-open' : '') + '"></span>'
-          + '<span class="sp-semester-num">' + sem.semester + '</span>'
-          + '<span class="sp-semester-label">' + sem.semester + '. Semester</span>'
-          + ectsInfo
+          + '<span class="sp-semester-num">' + period.period + '</span>'
+          + '<span class="sp-semester-label">' + periodLabel + ' ' + period.period + '</span>'
+          + '<span class="sp-sem-ects">' + pStats.completed + ' / ' + pStats.total + (config.hasEcts ? ' ECTS' : '') + '</span>'
         + '</div>'
-        + statusBadge
+        + '<div class="sp-semester-header-right">'
+          + statusBadge
+          + '<button class="sp-period-delete" data-period-del="' + idx + '" title="' + periodLabel + ' löschen">x</button>'
+        + '</div>'
         + '</div>';
 
       html += '<div class="sp-semester-content' + (isOpen ? ' sp-content-open' : '') + '">';
       html += '<table class="sp-table">';
       html += '<thead><tr>'
-        + '<th class="sp-th-name">Modul</th>'
-        + '<th class="sp-th-prof">Verantwortlich</th>'
-        + '<th class="sp-th-ects">ECTS</th>'
+        + '<th class="sp-th-name">' + (isSchule ? 'Fach' : 'Modul') + '</th>'
+        + '<th class="sp-th-prof">' + (isSchule ? 'Lehrer' : 'Verantwortlich') + '</th>'
+        + (config.hasEcts ? '<th class="sp-th-ects">ECTS</th>' : '')
         + '<th class="sp-th-pruef">Prüfung</th>'
         + '<th class="sp-th-note">Note</th>'
         + '<th class="sp-th-status">Status</th>'
+        + '<th class="sp-th-del"></th>'
         + '</tr></thead><tbody>';
 
-      sem.modules.forEach(function(mod) {
+      period.modules.forEach(function(mod, mi) {
         var entry = grades[mod.id] || {};
         var gradeVal = entry.grade || '';
         var status = entry.status || 'offen';
-        var customModName = Model.getModuleName(mod);
-        var customProfName = Model.getProfName(mod);
-
         var statusCls = 'sp-status-offen';
         if (status === 'bestanden') statusCls = 'sp-status-bestanden';
         else if (status === 'nicht-bestanden') statusCls = 'sp-status-nb';
-
         var rowClass = status === 'bestanden' ? ' sp-row-done' : '';
         var wabClass = mod.isWab ? ' sp-row-wab' : '';
-
-        var nameExtra = '';
-        if (mod.wahloptionen) {
-          nameExtra = '<div class="sp-wahloptionen">' + mod.wahloptionen.join(' / ') + '</div>';
-        }
-
         var wabLabel = mod.isWab ? '<span class="sp-wab-label">WAB</span>' : '';
 
         html += '<tr class="sp-module-row' + rowClass + wabClass + '">'
-          + '<td class="sp-td-name">' + wabLabel + '<input type="text" class="sp-name-input' + (mod.isWab ? ' sp-name-wab' : '') + '" data-name-key="name_' + mod.id + '" value="' + self._escapeAttr(customModName) + '">' + nameExtra + '</td>'
-          + '<td class="sp-td-prof"><input type="text" class="sp-prof-input" data-name-key="prof_' + mod.id + '" value="' + self._escapeAttr(customProfName) + '" placeholder="--"></td>'
-          + '<td class="sp-td-ects">' + mod.ects + '</td>'
-          + '<td class="sp-td-pruef">' + mod.pruefung + '</td>'
-          + '<td class="sp-td-note"><input type="number" class="sp-grade-input" data-module="' + mod.id + '" value="' + gradeVal + '" min="1.0" max="5.0" step="0.1" placeholder="--"></td>'
+          + '<td class="sp-td-name">' + wabLabel + '<input type="text" class="sp-name-input' + (mod.isWab ? ' sp-name-wab' : '') + '" data-period="' + idx + '" data-mod="' + mi + '" data-field="name" value="' + self._escapeAttr(mod.name) + '"></td>'
+          + '<td class="sp-td-prof"><input type="text" class="sp-prof-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="prof" value="' + self._escapeAttr(mod.prof || '') + '" placeholder="--"></td>'
+          + (config.hasEcts ? '<td class="sp-td-ects"><input type="number" class="sp-ects-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="points" value="' + (mod.points || 5) + '" min="1" max="30"></td>' : '')
+          + '<td class="sp-td-pruef"><input type="text" class="sp-pruef-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="pruefung" value="' + self._escapeAttr(mod.pruefung || '') + '" placeholder="--"></td>'
+          + '<td class="sp-td-note"><input type="number" class="sp-grade-input" data-module="' + mod.id + '" value="' + gradeVal + '" min="' + config.gradeMin + '" max="' + config.gradeMax + '" step="' + config.gradeStep + '" placeholder="--"></td>'
           + '<td class="sp-td-status"><select class="sp-status-select ' + statusCls + '" data-module="' + mod.id + '">'
             + '<option value="offen"' + (status === 'offen' ? ' selected' : '') + '>Offen</option>'
             + '<option value="bestanden"' + (status === 'bestanden' ? ' selected' : '') + '>Bestanden</option>'
             + '<option value="nicht-bestanden"' + (status === 'nicht-bestanden' ? ' selected' : '') + '>Nicht best.</option>'
           + '</select></td>'
+          + '<td class="sp-td-del"><button class="sp-mod-delete" data-period="' + idx + '" data-mod="' + mi + '" title="Löschen">x</button></td>'
           + '</tr>';
       });
 
-      html += '</tbody></table></div></div>';
+      html += '</tbody></table>';
+      html += '<button class="sp-add-module-btn" data-add-mod="' + idx + '">+ ' + (isSchule ? 'Fach' : 'Modul') + ' hinzufügen</button>';
+      html += '</div></div>';
     });
 
     body.innerHTML = html;
   },
 
-  _escapeAttr(str) {
-    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  renderPlanerStats(stats, mode) {
+    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.uni;
+    this.el('spAverage').textContent = stats.gradedPoints > 0 ? stats.average.toFixed(2) : '--';
+    var pointsStr = stats.completedPoints + ' / ' + stats.totalPoints;
+    this.el('spEctsComplete').textContent = pointsStr;
+    this.el('studienplanSummary').textContent = pointsStr + (config.hasEcts ? ' ECTS' : ' Fächer');
+    this.el('planerPointsLabel').textContent = config.pointsLabel;
+    var pct = stats.totalPoints > 0 ? Math.round((stats.completedPoints / stats.totalPoints) * 100) : 0;
+    this.el('spProgressFill').style.width = pct + '%';
   },
 
-  renderStudienplanStats(stats) {
-    this.el('spAverage').textContent = stats.gradedEcts > 0 ? stats.average.toFixed(2) : '--';
-    this.el('spEctsComplete').textContent = stats.completedEcts + ' / ' + stats.totalEcts;
-    this.el('studienplanSummary').textContent = stats.completedEcts + ' / ' + stats.totalEcts + ' ECTS';
-    const pct = stats.totalEcts > 0 ? Math.round((stats.completedEcts / stats.totalEcts) * 100) : 0;
-    this.el('spProgressFill').style.width = pct + '%';
+  showPlanerModeSelect() {
+    this.el('planerModeSelect').classList.remove('sync-hidden');
+    this.el('studienplanBody').classList.add('sync-hidden');
+    this.el('planerFooter').classList.add('sync-hidden');
+  },
+
+  showPlanerContent(mode) {
+    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.uni;
+    this.el('planerTitle').textContent = config.label;
+    this.el('planerModeSelect').classList.add('sync-hidden');
+    this.el('studienplanBody').classList.remove('sync-hidden');
+    this.el('planerFooter').classList.remove('sync-hidden');
   },
 
   showStudienplan() {
@@ -529,6 +541,9 @@ const View = {
     this.el('studienplanOverlay').classList.remove('visible');
   },
 };
+
+
+
 
 
 

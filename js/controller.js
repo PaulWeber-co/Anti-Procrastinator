@@ -75,29 +75,72 @@ const Controller = {
 
   // ── Lofi Player ──
 
+  lofiWindow: null,
+
   _initLofi() {
     var self = this;
     var btn = View.el('lofiBtn');
     var label = View.el('lofiLabel');
-    var frame = document.getElementById('lofiFrame');
 
     btn.addEventListener('click', function() {
       if (self.lofiPlaying) {
-        // Stop — iframe src leeren
-        frame.contentWindow.postMessage('stop', '*');
+        // Stop
+        self._stopLofi();
         btn.classList.remove('lofi-playing');
         label.textContent = 'LOFI';
         label.classList.remove('lofi-label-active');
         self.lofiPlaying = false;
       } else {
-        // Play — postMessage an sandboxed iframe
-        frame.contentWindow.postMessage('play', '*');
+        // Play — offscreen mini-window mit YouTube
+        self._startLofi();
         btn.classList.add('lofi-playing');
         label.textContent = 'LIVE';
         label.classList.add('lofi-label-active');
         self.lofiPlaying = true;
       }
     });
+  },
+
+  _startLofi() {
+    var self = this;
+    var ytUrl = 'https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&loop=1&playlist=jfKfPfyJRdk';
+    try {
+      if (typeof chrome !== 'undefined' && chrome.windows && chrome.windows.create) {
+        chrome.windows.create({
+          url: ytUrl,
+          type: 'popup',
+          width: 400,
+          height: 300,
+          left: screen.width - 420,
+          top: screen.height - 340,
+          focused: false
+        }, function(win) {
+          if (chrome.runtime.lastError) {
+            console.warn('Lofi window error:', chrome.runtime.lastError.message);
+            return;
+          }
+          if (win) self.lofiWindow = win.id;
+        });
+      } else {
+        self.lofiWindow = window.open(ytUrl, 'lofi', 'width=400,height=300,left=' + (screen.width - 420) + ',top=' + (screen.height - 340));
+      }
+    } catch (e) {
+      console.warn('Lofi start failed:', e);
+    }
+  },
+
+  _stopLofi() {
+    if (!this.lofiWindow) return;
+    try {
+      if (typeof chrome !== 'undefined' && chrome.windows && chrome.windows.remove) {
+        chrome.windows.remove(this.lofiWindow, function() {
+          if (chrome.runtime.lastError) { /* Window already closed */ }
+        });
+      } else if (this.lofiWindow && typeof this.lofiWindow.close === 'function') {
+        this.lofiWindow.close();
+      }
+    } catch (e) { /* already closed */ }
+    this.lofiWindow = null;
   },
 
   // ── Wetter ──
@@ -412,9 +455,11 @@ const Controller = {
       var timeStr = lastSync > 0
         ? new Date(lastSync).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
         : '--';
-      statusEl.innerHTML = '<span class="sync-connected">Verbunden</span> — Letzte Sync: ' + timeStr;
+      statusEl.textContent = 'Verbunden — Letzte Sync: ' + timeStr;
+      statusEl.className = 'sync-url-status sync-connected';
     } else {
       statusEl.textContent = '';
+      statusEl.className = 'sync-url-status';
     }
 
     if (syncEvents.length > 0) {
@@ -428,7 +473,8 @@ const Controller = {
   _syncFromUrl(url) {
     var self = this;
     var statusEl = View.el('syncUrlStatus');
-    statusEl.innerHTML = '<span class="sync-loading">Synchronisiere...</span>';
+    statusEl.textContent = 'Synchronisiere...';
+    statusEl.className = 'sync-url-status sync-loading';
 
     // CORS-Proxy nötig für externe URLs
     var proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
@@ -445,7 +491,8 @@ const Controller = {
       })
       .catch(function(err) {
         console.warn('Sync fehlgeschlagen:', err);
-        statusEl.innerHTML = '<span class="sync-error">Sync fehlgeschlagen — prüfe die URL</span>';
+        statusEl.textContent = 'Sync fehlgeschlagen — prüfe die URL';
+        statusEl.className = 'sync-url-status sync-error';
       });
   },
 
@@ -456,11 +503,11 @@ const Controller = {
       var text = ev.target.result;
       var events = Model.parseICS(text);
       if (events.length === 0) {
-        alert('Keine Termine in der Datei gefunden.');
+        View.el('syncUrlStatus').textContent = 'Keine Termine in der Datei gefunden.';
         return;
       }
       var count = Model.importICSEvents(events);
-      alert(count + ' Termin(e) als Aufgaben importiert.');
+      View.el('syncUrlStatus').textContent = count + ' Termin(e) als Aufgaben importiert.';
       self._updateSyncStatus();
       self.renderAll();
     };
@@ -518,14 +565,13 @@ const Controller = {
     View.el('todoDate').value = Model.todayStr();
   },
 
-  // ── Studienplan ──
+  // ── Planer ──
 
   _initStudienplan() {
     var self = this;
 
     View.el('studienplanBtn').addEventListener('click', function() {
-      self._renderStudienplan();
-      View.showStudienplan();
+      self._openPlaner();
     });
 
     View.el('studienplanClose').addEventListener('click', function() {
@@ -537,18 +583,60 @@ const Controller = {
         View.hideStudienplan();
       }
     });
+
+    // Modus-Auswahl Buttons
+    document.querySelectorAll('.planer-mode-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var mode = btn.dataset.mode;
+        Model.setPlanerMode(mode);
+        self._renderPlaner();
+      });
+    });
+
+    // Modus ändern
+    View.el('planerReset').addEventListener('click', function() {
+      self._showConfirm('Modus ändern? Alle bisherigen Daten werden gelöscht.', function() {
+        Model.resetPlaner();
+        View.el('studienplanBody').innerHTML = '';
+        View.el('planerTitle').textContent = 'Planer';
+        View.el('studienplanSummary').textContent = '';
+        View.showPlanerModeSelect();
+      });
+    });
+
+    // Zeitraum hinzufügen
+    View.el('planerAddPeriod').addEventListener('click', function() {
+      Model.addPeriod();
+      self._renderPlaner();
+    });
   },
 
-  _renderStudienplan() {
-    var self = this;
-    var grades = Model.getGrades();
-    var customNames = Model.getCustomNames();
-    View.renderStudienplan(Model.STUDIENPLAN, grades, customNames);
-    View.renderStudienplanStats(Model.getStudienplanStats());
+  _openPlaner() {
+    var mode = Model.getPlanerMode();
+    if (mode) {
+      this._renderPlaner();
+    } else {
+      View.showPlanerModeSelect();
+    }
+    View.showStudienplan();
+  },
 
-    // Accordion toggle
+  _renderPlaner() {
+    var self = this;
+    var mode = Model.getPlanerMode();
+    if (!mode) { View.showPlanerModeSelect(); return; }
+
+    var data = Model.getPlanerData();
+    var grades = Model.getGrades();
+
+    View.showPlanerContent(mode);
+    View.renderPlaner(data, grades, mode);
+    View.renderPlanerStats(Model.getPlanerStats(), mode);
+
+    // Accordion
     document.querySelectorAll('.sp-semester-header').forEach(function(header) {
-      header.addEventListener('click', function() {
+      header.addEventListener('click', function(e) {
+        if (e.target.closest('.sp-period-delete')) return;
         var content = header.nextElementSibling;
         var chevron = header.querySelector('.sp-chevron');
         if (content.classList.contains('sp-content-open')) {
@@ -568,7 +656,7 @@ const Controller = {
         var selectEl = document.querySelector('.sp-status-select[data-module="' + moduleId + '"]');
         var status = selectEl ? selectEl.value : 'offen';
         Model.saveGrade(moduleId, input.value, status);
-        self._refreshStudienplan();
+        self._refreshPlaner();
       });
     });
 
@@ -579,36 +667,61 @@ const Controller = {
         var gradeInput = document.querySelector('.sp-grade-input[data-module="' + moduleId + '"]');
         var grade = gradeInput ? gradeInput.value : '';
         Model.saveGrade(moduleId, grade, select.value);
-        self._refreshStudienplan();
+        self._refreshPlaner();
       });
     });
 
-    // Custom module name inputs
-    document.querySelectorAll('.sp-name-input').forEach(function(input) {
+    // Inline module field edits (name, prof, pruefung, points)
+    document.querySelectorAll('.sp-name-input, .sp-prof-input, .sp-pruef-input, .sp-ects-input').forEach(function(input) {
       input.addEventListener('change', function() {
-        Model.saveCustomName(input.dataset.nameKey, input.value);
+        var pi = parseInt(input.dataset.period);
+        var mi = parseInt(input.dataset.mod);
+        var field = input.dataset.field;
+        var val = field === 'points' ? parseInt(input.value) || 5 : input.value;
+        Model.updateModule(pi, mi, field, val);
+        self._refreshPlaner();
       });
     });
 
-    // Custom prof name inputs
-    document.querySelectorAll('.sp-prof-input').forEach(function(input) {
-      input.addEventListener('change', function() {
-        Model.saveCustomName(input.dataset.nameKey, input.value);
+    // Delete module
+    document.querySelectorAll('.sp-mod-delete').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        Model.deleteModule(parseInt(btn.dataset.period), parseInt(btn.dataset.mod));
+        self._refreshPlaner();
+      });
+    });
+
+    // Delete period
+    document.querySelectorAll('.sp-period-delete').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var config = Model.PLANER_MODES[mode];
+        var periodIdx = parseInt(btn.dataset.periodDel);
+        self._showConfirm(config.periodLabel + ' löschen?', function() {
+          Model.deletePeriod(periodIdx);
+          self._refreshPlaner();
+        });
+      });
+    });
+
+    // Add module
+    document.querySelectorAll('.sp-add-module-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        Model.addModule(parseInt(btn.dataset.addMod));
+        self._refreshPlaner();
       });
     });
   },
 
-  _refreshStudienplan() {
-    // Merke welche Semester offen sind
+  _refreshPlaner() {
     var openSemesters = [];
     document.querySelectorAll('.sp-semester-content.sp-content-open').forEach(function(el) {
       var parent = el.closest('.sp-semester');
       if (parent) openSemesters.push(parent.dataset.semester);
     });
 
-    this._renderStudienplan();
+    this._renderPlaner();
 
-    // Stelle den open-State wieder her
     openSemesters.forEach(function(idx) {
       var content = document.querySelector('.sp-semester[data-semester="' + idx + '"] .sp-semester-content');
       var chevron = document.querySelector('.sp-semester[data-semester="' + idx + '"] .sp-chevron');
@@ -619,15 +732,53 @@ const Controller = {
     });
   },
 
-  _updateStatusClasses() {
-    document.querySelectorAll('.sp-status-select').forEach(function(select) {
-      select.classList.remove('sp-status-offen', 'sp-status-bestanden', 'sp-status-nb');
-      if (select.value === 'bestanden') select.classList.add('sp-status-bestanden');
-      else if (select.value === 'nicht-bestanden') select.classList.add('sp-status-nb');
-      else select.classList.add('sp-status-offen');
+  // ── Confirm Modal (confirm() funktioniert nicht in Extensions) ──
+
+  _confirmCallback: null,
+
+  _showConfirm: function(text, onOk) {
+    var self = this;
+    var overlay = View.el('confirmOverlay');
+    View.el('confirmText').textContent = text;
+    overlay.classList.remove('sync-hidden');
+    overlay.classList.add('visible');
+    self._confirmCallback = onOk;
+
+    // Event-Listener einmal binden (alte entfernen)
+    var okBtn = View.el('confirmOk');
+    var cancelBtn = View.el('confirmCancel');
+    var newOk = okBtn.cloneNode(true);
+    var newCancel = cancelBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newOk, okBtn);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+    newOk.addEventListener('click', function() {
+      overlay.classList.remove('visible');
+      overlay.classList.add('sync-hidden');
+      if (self._confirmCallback) self._confirmCallback();
+      self._confirmCallback = null;
+    });
+
+    newCancel.addEventListener('click', function() {
+      overlay.classList.remove('visible');
+      overlay.classList.add('sync-hidden');
+      self._confirmCallback = null;
     });
   },
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

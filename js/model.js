@@ -13,6 +13,8 @@ const Model = {
     syncUrl: 'ht_sync_url',
     syncEvents: 'ht_sync_events',
     syncTime: 'ht_sync_time',
+    planerMode: 'ht_planer_mode',
+    planerData: 'ht_planer_data',
   },
 
   // ── To-Do Daten ──
@@ -353,177 +355,287 @@ const Model = {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   },
 
-  // ── Studienplan ──
+  // ── Planer (generisch: Schule / Uni / Provadis) ──
 
-  STUDIENPLAN: [
-    {
-      semester: 1,
-      modules: [
-        { id: 's1_mathe1', name: 'Mathematik 1', ects: 5, pruefung: '90-min Klausur', wab: false, verantwortlich: 'Prof. Dr. Volker Scheidemann' },
-        { id: 's1_lerntechniken', name: 'Lerntechniken und wissenschaftliches Arbeiten', ects: 5, pruefung: 'Klausur (70%) + Gruppenpräsentation (30%)', wab: false, verantwortlich: 'Prof. Dr. Marcus Frenz' },
-        { id: 's1_gdi', name: 'Grundlagen der Informatik', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's1_prog', name: 'Programmierung', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's1_prog_wab', name: 'Programmierung WAB', ects: 5, pruefung: 'Präsentation/Kolloquium', wab: false, isWab: true, parentId: 's1_prog' },
-        { id: 's1_english', name: 'Business English', ects: 5, pruefung: 'Klausur / mündliche Prüfung', wab: false },
-      ],
-    },
-    {
-      semester: 2,
-      modules: [
-        { id: 's2_mathe2', name: 'Mathematik 2', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's2_theo', name: 'Theoretische Informatik', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's2_algo', name: 'Algorithmen und Datenstrukturen', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's2_algo_wab', name: 'Algorithmen und Datenstrukturen WAB', ects: 5, pruefung: 'WAB Kolloquium', wab: false, isWab: true, parentId: 's2_algo' },
-        { id: 's2_fortprog', name: 'Fortgeschrittene Programmierung', ects: 5, pruefung: 'Klausur / Programmierprojekt', wab: false },
-        { id: 's2_komm', name: 'Kommunikationskompetenz', ects: 5, pruefung: 'Präsentation / Projektarbeit', wab: false },
-      ],
-    },
-    {
-      semester: 3,
-      modules: [
-        { id: 's3_infosec', name: 'Informationssicherheit', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's3_datenbank', name: 'Datenmodellierung und Datenbanken', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's3_datenbank_wab', name: 'Datenmodellierung und Datenbanken WAB', ects: 5, pruefung: 'WAB Kolloquium', wab: false, isWab: true, parentId: 's3_datenbank' },
-        { id: 's3_netze', name: 'Netze und Verteilte Systeme', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's3_bs', name: 'Betriebssysteme', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's3_pm', name: 'Projektmanagement', ects: 5, pruefung: 'Projektarbeit / Präsentation', wab: false },
-      ],
-    },
-    {
-      semester: 4,
-      modules: [
-        { id: 's4_sweng', name: 'Agiles Software-Engineering und Softwaretechnik', ects: 5, pruefung: 'Projekt', wab: false },
-        { id: 's4_sweng_wab', name: 'Agiles Software-Engineering WAB', ects: 5, pruefung: 'WAB Kolloquium', wab: false, isWab: true, parentId: 's4_sweng' },
-        { id: 's4_techinfo', name: 'Technische Informatik und Rechnerarchitekturen / XaaS', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's4_hci', name: 'Human-Computer-Interaction', ects: 5, pruefung: 'Projekt / Präsentation', wab: false },
-        { id: 's4_data', name: 'Data Analytics und Big Data', ects: 5, pruefung: 'Klausur / Projekt', wab: false },
-        { id: 's4_interkult', name: 'Interkulturelle Kompetenz und heterogene Teams', ects: 5, pruefung: 'Präsentation / Gruppenarbeit', wab: false },
-      ],
-    },
-    {
-      semester: 5,
-      modules: [
-        { id: 's5_projekt', name: 'Projektpraktikum', ects: 5, pruefung: 'Projekt', wab: false },
-        { id: 's5_projekt_wab', name: 'Projektpraktikum WAB', ects: 5, pruefung: 'Kolloquium', wab: false, isWab: true, parentId: 's5_projekt' },
-        { id: 's5_microservice', name: 'Software-Anwendungsarchitekturen und Microservice APIs', ects: 5, pruefung: 'Projekt / Klausur', wab: false },
-        { id: 's5_ml', name: 'Maschinelles Lernen und Artificial Intelligence', ects: 5, pruefung: 'Klausur / Projekt', wab: false },
-        { id: 's5_bwl', name: 'Betriebswirtschaftslehre und IT-Service-Management', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's5_wpf1', name: 'Wahlpflichtfach 1', ects: 5, pruefung: 'Klausur / Projekt', wab: false, wahloptionen: ['Mobile Anwendungen', 'Technikfolgenabschätzung', 'Privacy Enhancement Technologies'] },
-      ],
-    },
-    {
-      semester: 6,
-      modules: [
-        { id: 's6_trends', name: 'New Trends in IT und Management der Digitalen Transformation', ects: 5, pruefung: 'Projekt / Präsentation', wab: false },
-        { id: 's6_recht', name: 'Recht und Datenschutz', ects: 5, pruefung: 'Klausur', wab: false },
-        { id: 's6_thesis', name: 'Bachelor Thesis', ects: 12, pruefung: 'Abschlussarbeit', wab: false },
-        { id: 's6_kolloq', name: 'Bachelor-Thesis Kolloquium', ects: 3, pruefung: 'Verteidigung', wab: false },
-        { id: 's6_wpf2', name: 'Wahlpflichtfach 2', ects: 5, pruefung: 'Klausur / Projekt', wab: false, wahloptionen: ['Webanwendungen', 'Embedded Systems und Software', 'Resiliente Netzwerke'] },
-      ],
-    },
+  PLANER_MODES: {
+    schule: { label: 'Stundenplan', periodLabel: 'Klasse', pointsLabel: 'Fächer', gradeMin: 1, gradeMax: 6, gradeStep: 1, hasEcts: false, bestNote: 1 },
+    uni: { label: 'Studienplan', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0 },
+    provadis: { label: 'Studienplan Provadis', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0 },
+  },
+
+  PROVADIS_DATA: [
+    { period: 1, modules: [
+      { name: 'Mathematik 1', points: 5, pruefung: '90-min Klausur', prof: 'Prof. Dr. Volker Scheidemann' },
+      { name: 'Lerntechniken und wissenschaftliches Arbeiten', points: 5, pruefung: 'Klausur (70%) + Gruppenpräsentation (30%)', prof: 'Prof. Dr. Marcus Frenz' },
+      { name: 'Grundlagen der Informatik', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Programmierung', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Programmierung WAB', points: 5, pruefung: 'Präsentation/Kolloquium', prof: '', isWab: true },
+      { name: 'Business English', points: 5, pruefung: 'Klausur / mündliche Prüfung', prof: '' },
+    ]},
+    { period: 2, modules: [
+      { name: 'Mathematik 2', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Theoretische Informatik', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Algorithmen und Datenstrukturen', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Algorithmen und Datenstrukturen WAB', points: 5, pruefung: 'WAB Kolloquium', prof: '', isWab: true },
+      { name: 'Fortgeschrittene Programmierung', points: 5, pruefung: 'Klausur / Programmierprojekt', prof: '' },
+      { name: 'Kommunikationskompetenz', points: 5, pruefung: 'Präsentation / Projektarbeit', prof: '' },
+    ]},
+    { period: 3, modules: [
+      { name: 'Informationssicherheit', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Datenmodellierung und Datenbanken', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Datenmodellierung und Datenbanken WAB', points: 5, pruefung: 'WAB Kolloquium', prof: '', isWab: true },
+      { name: 'Netze und Verteilte Systeme', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Betriebssysteme', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Projektmanagement', points: 5, pruefung: 'Projektarbeit / Präsentation', prof: '' },
+    ]},
+    { period: 4, modules: [
+      { name: 'Agiles Software-Engineering und Softwaretechnik', points: 5, pruefung: 'Projekt', prof: '' },
+      { name: 'Agiles Software-Engineering WAB', points: 5, pruefung: 'WAB Kolloquium', prof: '', isWab: true },
+      { name: 'Technische Informatik und Rechnerarchitekturen / XaaS', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Human-Computer-Interaction', points: 5, pruefung: 'Projekt / Präsentation', prof: '' },
+      { name: 'Data Analytics und Big Data', points: 5, pruefung: 'Klausur / Projekt', prof: '' },
+      { name: 'Interkulturelle Kompetenz und heterogene Teams', points: 5, pruefung: 'Präsentation / Gruppenarbeit', prof: '' },
+    ]},
+    { period: 5, modules: [
+      { name: 'Projektpraktikum', points: 5, pruefung: 'Projekt', prof: '' },
+      { name: 'Projektpraktikum WAB', points: 5, pruefung: 'Kolloquium', prof: '', isWab: true },
+      { name: 'Software-Anwendungsarchitekturen und Microservice APIs', points: 5, pruefung: 'Projekt / Klausur', prof: '' },
+      { name: 'Maschinelles Lernen und Artificial Intelligence', points: 5, pruefung: 'Klausur / Projekt', prof: '' },
+      { name: 'Betriebswirtschaftslehre und IT-Service-Management', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Wahlpflichtfach 1', points: 5, pruefung: 'Klausur / Projekt', prof: '' },
+    ]},
+    { period: 6, modules: [
+      { name: 'New Trends in IT und Management der Digitalen Transformation', points: 5, pruefung: 'Projekt / Präsentation', prof: '' },
+      { name: 'Recht und Datenschutz', points: 5, pruefung: 'Klausur', prof: '' },
+      { name: 'Bachelor Thesis', points: 12, pruefung: 'Abschlussarbeit', prof: '' },
+      { name: 'Bachelor-Thesis Kolloquium', points: 3, pruefung: 'Verteidigung', prof: '' },
+      { name: 'Wahlpflichtfach 2', points: 5, pruefung: 'Klausur / Projekt', prof: '' },
+    ]},
   ],
+
+  getPlanerMode() {
+    return Storage.get(this.STORAGE_KEYS.planerMode) || null;
+  },
+
+  setPlanerMode(mode) {
+    Storage.set(this.STORAGE_KEYS.planerMode, mode);
+    // Immer neu initialisieren — nach resetPlaner() sind Daten leer
+    var existing = this.getPlanerData();
+    if (!existing || existing.length === 0) {
+      this._initPlanerData(mode);
+    }
+  },
+
+  resetPlaner() {
+    Storage.remove(this.STORAGE_KEYS.planerMode);
+    Storage.remove(this.STORAGE_KEYS.planerData);
+    Storage.remove(this.STORAGE_KEYS.grades);
+  },
+
+  getPlanerData() {
+    return JSON.parse(Storage.get(this.STORAGE_KEYS.planerData) || '[]');
+  },
+
+  savePlanerData(data) {
+    Storage.set(this.STORAGE_KEYS.planerData, JSON.stringify(data));
+  },
+
+  _initPlanerData(mode) {
+    var data;
+    if (mode === 'provadis') {
+      data = this.PROVADIS_DATA.map(function(p, pi) {
+        return {
+          period: p.period,
+          modules: p.modules.map(function(m, mi) {
+            return { id: 'p' + pi + '_m' + mi, name: m.name, points: m.points, pruefung: m.pruefung, prof: m.prof, isWab: m.isWab || false };
+          })
+        };
+      });
+    } else if (mode === 'schule') {
+      data = [];
+      for (var k = 5; k <= 13; k++) {
+        data.push({
+          period: k,
+          modules: [
+            { id: 'k' + k + '_m0', name: 'Mathematik', points: 1, pruefung: 'Klausur', prof: '' },
+            { id: 'k' + k + '_m1', name: 'Deutsch', points: 1, pruefung: 'Klausur', prof: '' },
+            { id: 'k' + k + '_m2', name: 'Englisch', points: 1, pruefung: 'Klausur', prof: '' },
+            { id: 'k' + k + '_m3', name: 'Sport', points: 1, pruefung: 'Praktisch', prof: '' },
+          ]
+        });
+      }
+    } else {
+      data = [];
+      for (var s = 1; s <= 6; s++) {
+        data.push({
+          period: s,
+          modules: [
+            { id: 'u' + s + '_m0', name: 'Modul 1', points: 5, pruefung: 'Klausur', prof: '' },
+            { id: 'u' + s + '_m1', name: 'Modul 2', points: 5, pruefung: 'Klausur', prof: '' },
+            { id: 'u' + s + '_m2', name: 'Modul 3', points: 5, pruefung: 'Klausur', prof: '' },
+          ]
+        });
+      }
+    }
+    this.savePlanerData(data);
+  },
+
+  addPeriod() {
+    var data = this.getPlanerData();
+    var mode = this.getPlanerMode();
+    var nextNum = data.length > 0 ? data[data.length - 1].period + 1 : 1;
+    var prefix = mode === 'schule' ? 'k' : (mode === 'provadis' ? 'p' : 'u');
+    data.push({
+      period: nextNum,
+      modules: [
+        { id: prefix + nextNum + '_m0', name: mode === 'schule' ? 'Neues Fach' : 'Neues Modul', points: mode === 'schule' ? 1 : 5, pruefung: 'Klausur', prof: '' }
+      ]
+    });
+    this.savePlanerData(data);
+    return data;
+  },
+
+  addModule(periodIdx) {
+    var data = this.getPlanerData();
+    var mode = this.getPlanerMode();
+    if (!data[periodIdx]) return data;
+    var mCount = data[periodIdx].modules.length;
+    var prefix = mode === 'schule' ? 'k' : (mode === 'provadis' ? 'p' : 'u');
+    var id = prefix + periodIdx + '_m' + mCount + '_' + Date.now();
+    data[periodIdx].modules.push({
+      id: id,
+      name: mode === 'schule' ? 'Neues Fach' : 'Neues Modul',
+      points: mode === 'schule' ? 1 : 5,
+      pruefung: 'Klausur',
+      prof: ''
+    });
+    this.savePlanerData(data);
+    return data;
+  },
+
+  deleteModule(periodIdx, moduleIdx) {
+    var data = this.getPlanerData();
+    if (data[periodIdx] && data[periodIdx].modules[moduleIdx]) {
+      var modId = data[periodIdx].modules[moduleIdx].id;
+      data[periodIdx].modules.splice(moduleIdx, 1);
+      // Note löschen
+      var grades = this.getGrades();
+      delete grades[modId];
+      Storage.set(this.STORAGE_KEYS.grades, JSON.stringify(grades));
+    }
+    this.savePlanerData(data);
+    return data;
+  },
+
+  deletePeriod(periodIdx) {
+    var data = this.getPlanerData();
+    if (data[periodIdx]) {
+      var grades = this.getGrades();
+      data[periodIdx].modules.forEach(function(m) { delete grades[m.id]; });
+      Storage.set(this.STORAGE_KEYS.grades, JSON.stringify(grades));
+      data.splice(periodIdx, 1);
+    }
+    this.savePlanerData(data);
+    return data;
+  },
+
+  updateModule(periodIdx, moduleIdx, field, value) {
+    var data = this.getPlanerData();
+    if (data[periodIdx] && data[periodIdx].modules[moduleIdx]) {
+      data[periodIdx].modules[moduleIdx][field] = value;
+    }
+    this.savePlanerData(data);
+  },
+
+  updatePeriodNumber(periodIdx, newNum) {
+    var data = this.getPlanerData();
+    if (data[periodIdx]) {
+      data[periodIdx].period = parseInt(newNum) || data[periodIdx].period;
+    }
+    this.savePlanerData(data);
+  },
 
   getGrades() {
     return JSON.parse(Storage.get(this.STORAGE_KEYS.grades) || '{}');
   },
 
   saveGrade(moduleId, grade, status) {
-    const grades = this.getGrades();
+    var grades = this.getGrades();
     grades[moduleId] = { grade: parseFloat(grade) || null, status: status || 'offen' };
     Storage.set(this.STORAGE_KEYS.grades, JSON.stringify(grades));
   },
 
-  getStudienplanStats() {
-    const grades = this.getGrades();
-    let totalEcts = 0;
-    let completedEcts = 0;
-    let weightedSum = 0;
-    let gradedEcts = 0;
+  getPlanerStats() {
+    var mode = this.getPlanerMode();
+    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.uni;
+    var data = this.getPlanerData();
+    var grades = this.getGrades();
+    var totalPoints = 0;
+    var completedPoints = 0;
+    var weightedSum = 0;
+    var gradedPoints = 0;
 
-    this.STUDIENPLAN.forEach(function(sem) {
-      sem.modules.forEach(function(mod) {
-        totalEcts += mod.ects;
-        const entry = grades[mod.id];
+    data.forEach(function(period) {
+      period.modules.forEach(function(mod) {
+        var pts = config.hasEcts ? (mod.points || 5) : 1;
+        totalPoints += pts;
+        var entry = grades[mod.id];
         if (entry && entry.status === 'bestanden') {
-          completedEcts += mod.ects;
+          completedPoints += pts;
           if (entry.grade && entry.grade > 0) {
-            weightedSum += entry.grade * mod.ects;
-            gradedEcts += mod.ects;
+            weightedSum += entry.grade * pts;
+            gradedPoints += pts;
           }
         }
       });
     });
 
-    const average = gradedEcts > 0 ? (weightedSum / gradedEcts) : 0;
-    return { totalEcts: totalEcts, completedEcts: completedEcts, average: average, gradedEcts: gradedEcts };
+    var average = gradedPoints > 0 ? (weightedSum / gradedPoints) : 0;
+    return { totalPoints: totalPoints, completedPoints: completedPoints, average: average, gradedPoints: gradedPoints };
   },
 
-  // ── Custom Names (Modul/Prof umbenennen) ──
+  isPeriodComplete(periodIdx) {
+    var data = this.getPlanerData();
+    var grades = this.getGrades();
+    var period = data[periodIdx];
+    if (!period) return false;
+    return period.modules.length > 0 && period.modules.every(function(m) {
+      var e = grades[m.id];
+      return e && e.status === 'bestanden';
+    });
+  },
 
+  getPeriodStats(periodIdx) {
+    var mode = this.getPlanerMode();
+    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.uni;
+    var data = this.getPlanerData();
+    var grades = this.getGrades();
+    var period = data[periodIdx];
+    if (!period) return { total: 0, completed: 0, avg: null };
+    var total = 0, completed = 0, wSum = 0, gPts = 0;
+    period.modules.forEach(function(m) {
+      var pts = config.hasEcts ? (m.points || 5) : 1;
+      total += pts;
+      var e = grades[m.id];
+      if (e && e.status === 'bestanden') {
+        completed += pts;
+        if (e.grade > 0) { wSum += e.grade * pts; gPts += pts; }
+      }
+    });
+    return { total: total, completed: completed, avg: gPts > 0 ? wSum / gPts : null };
+  },
+
+  // ── Legacy compat ──
   getCustomNames() {
     return JSON.parse(Storage.get(this.STORAGE_KEYS.customNames) || '{}');
   },
-
   saveCustomName(key, value) {
     var names = this.getCustomNames();
-    if (value && value.trim()) {
-      names[key] = value.trim();
-    } else {
-      delete names[key];
-    }
+    if (value && value.trim()) { names[key] = value.trim(); } else { delete names[key]; }
     Storage.set(this.STORAGE_KEYS.customNames, JSON.stringify(names));
   },
-
-  getModuleName(mod) {
-    var names = this.getCustomNames();
-    return names['name_' + mod.id] || mod.name;
-  },
-
-  getProfName(mod) {
-    var names = this.getCustomNames();
-    return names['prof_' + mod.id] || mod.verantwortlich || '';
-  },
-
-  // ── Semester-Status ──
-
-  isSemesterComplete(semesterIndex) {
-    var grades = this.getGrades();
-    var sem = this.STUDIENPLAN[semesterIndex];
-    if (!sem) return false;
-    return sem.modules.every(function(mod) {
-      var entry = grades[mod.id];
-      return entry && entry.status === 'bestanden';
-    });
-  },
-
-  getSemesterEcts(semesterIndex) {
-    var grades = this.getGrades();
-    var sem = this.STUDIENPLAN[semesterIndex];
-    if (!sem) return { total: 0, completed: 0 };
-    var total = 0;
-    var completed = 0;
-    sem.modules.forEach(function(mod) {
-      total += mod.ects;
-      var entry = grades[mod.id];
-      if (entry && entry.status === 'bestanden') completed += mod.ects;
-    });
-    return { total: total, completed: completed };
-  },
-
-  getSemesterAverage(semesterIndex) {
-    var grades = this.getGrades();
-    var sem = this.STUDIENPLAN[semesterIndex];
-    if (!sem) return null;
-    var weightedSum = 0;
-    var gradedEcts = 0;
-    sem.modules.forEach(function(mod) {
-      var entry = grades[mod.id];
-      if (entry && entry.status === 'bestanden' && entry.grade && entry.grade > 0) {
-        weightedSum += entry.grade * mod.ects;
-        gradedEcts += mod.ects;
-      }
-    });
-    return gradedEcts > 0 ? (weightedSum / gradedEcts) : null;
-  },
 };
+
+
+
 
