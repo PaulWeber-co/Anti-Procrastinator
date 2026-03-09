@@ -557,6 +557,7 @@ const Controller = {
     var mode = Model.getPlanerMode();
     if (!mode) { View.showPlanerModeSelect(); return; }
 
+    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.uni;
     var data = Model.getPlanerData();
     var grades = Model.getGrades();
 
@@ -580,43 +581,121 @@ const Controller = {
       });
     });
 
-    // Grade inputs
-    document.querySelectorAll('.sp-grade-input').forEach(function(input) {
-      input.addEventListener('change', function() {
-        var moduleId = input.dataset.module;
-        var selectEl = document.querySelector('.sp-status-select[data-module="' + moduleId + '"]');
-        var status = selectEl ? selectEl.value : 'offen';
-        Model.saveGrade(moduleId, input.value, status);
-        self._refreshPlaner();
-      });
-    });
+    if (config.isSchule) {
+      // ── SCHUL-MODUS Events ──
 
-    // Status selects
-    document.querySelectorAll('.sp-status-select').forEach(function(select) {
-      select.addEventListener('change', function() {
-        var moduleId = select.dataset.module;
-        var gradeInput = document.querySelector('.sp-grade-input[data-module="' + moduleId + '"]');
-        var grade = gradeInput ? gradeInput.value : '';
-        Model.saveGrade(moduleId, grade, select.value);
-        self._refreshPlaner();
+      // Fach Name & Lehrer inputs
+      document.querySelectorAll('.sp-fach-name-input, .sp-fach-lehrer-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+          var pi = parseInt(input.dataset.period);
+          var mi = parseInt(input.dataset.mod);
+          var field = input.dataset.field;
+          Model.updateModule(pi, mi, field, input.value);
+        });
       });
-    });
 
-    // Inline module field edits (name, prof, pruefung, points)
-    document.querySelectorAll('.sp-name-input, .sp-prof-input, .sp-pruef-input, .sp-ects-input').forEach(function(input) {
-      input.addEventListener('change', function() {
-        var pi = parseInt(input.dataset.period);
-        var mi = parseInt(input.dataset.mod);
-        var field = input.dataset.field;
-        var val = field === 'points' ? parseInt(input.value) || 5 : input.value;
-        Model.updateModule(pi, mi, field, val);
-        self._refreshPlaner();
+      // Noten-Chips klicken zum Löschen
+      document.querySelectorAll('.sp-note-chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          var pi = parseInt(chip.dataset.period);
+          var mi = parseInt(chip.dataset.mod);
+          var type = chip.dataset.type;
+          var ni = parseInt(chip.dataset.noteIdx);
+          self._showConfirm('Note ' + chip.textContent + ' löschen?', function() {
+            Model.removeSchulNote(pi, mi, type, ni);
+            self._refreshPlaner();
+          });
+        });
       });
-    });
 
-    // Delete module
+      // Note hinzufügen
+      document.querySelectorAll('.sp-note-add-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var pi = parseInt(btn.dataset.period);
+          var mi = parseInt(btn.dataset.mod);
+          var type = btn.dataset.type;
+
+          // Erstelle ein Mini-Input inline
+          var existingInput = btn.parentElement.querySelector('.sp-note-inline-input');
+          if (existingInput) {
+            existingInput.focus();
+            return;
+          }
+
+          var inp = document.createElement('input');
+          inp.type = 'number';
+          inp.min = '1';
+          inp.max = '6';
+          inp.step = '1';
+          inp.className = 'sp-note-inline-input';
+          inp.placeholder = '1-6';
+          btn.parentElement.insertBefore(inp, btn);
+          inp.focus();
+
+          function saveNote() {
+            var val = parseInt(inp.value);
+            if (val >= 1 && val <= 6) {
+              Model.addSchulNote(pi, mi, type, val);
+              self._refreshPlaner();
+            } else {
+              inp.remove();
+            }
+          }
+
+          inp.addEventListener('keydown', function(ev) {
+            if (ev.key === 'Enter') saveNote();
+            if (ev.key === 'Escape') inp.remove();
+          });
+
+          inp.addEventListener('blur', function() {
+            saveNote();
+          });
+        });
+      });
+
+    } else {
+      // ── UNI-MODUS Events (bestehend) ──
+
+      // Grade inputs
+      document.querySelectorAll('.sp-grade-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+          var moduleId = input.dataset.module;
+          var selectEl = document.querySelector('.sp-status-select[data-module="' + moduleId + '"]');
+          var status = selectEl ? selectEl.value : 'offen';
+          Model.saveGrade(moduleId, input.value, status);
+          self._refreshPlaner();
+        });
+      });
+
+      // Status selects
+      document.querySelectorAll('.sp-status-select').forEach(function(select) {
+        select.addEventListener('change', function() {
+          var moduleId = select.dataset.module;
+          var gradeInput = document.querySelector('.sp-grade-input[data-module="' + moduleId + '"]');
+          var grade = gradeInput ? gradeInput.value : '';
+          Model.saveGrade(moduleId, grade, select.value);
+          self._refreshPlaner();
+        });
+      });
+
+      // Inline module field edits (name, prof, pruefung, points)
+      document.querySelectorAll('.sp-name-input, .sp-prof-input, .sp-pruef-input, .sp-ects-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+          var pi = parseInt(input.dataset.period);
+          var mi = parseInt(input.dataset.mod);
+          var field = input.dataset.field;
+          var val = field === 'points' ? parseInt(input.value) || 5 : input.value;
+          Model.updateModule(pi, mi, field, val);
+          self._refreshPlaner();
+        });
+      });
+    }
+
+    // Delete module (both modes)
     document.querySelectorAll('.sp-mod-delete').forEach(function(btn) {
-      btn.addEventListener('click', function() {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
         Model.deleteModule(parseInt(btn.dataset.period), parseInt(btn.dataset.mod));
         self._refreshPlaner();
       });
@@ -626,7 +705,6 @@ const Controller = {
     document.querySelectorAll('.sp-period-delete').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        var config = Model.PLANER_MODES[mode];
         var periodIdx = parseInt(btn.dataset.periodDel);
         self._showConfirm(config.periodLabel + ' löschen?', function() {
           Model.deletePeriod(periodIdx);

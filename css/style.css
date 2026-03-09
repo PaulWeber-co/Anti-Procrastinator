@@ -1541,7 +1541,6 @@ body {
 
 /* Utility */
 .sync-hidden { display: none; }
-.lofi-label-active { color: var(--calendar-selected); }
 
 @keyframes modalIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -1752,6 +1751,7 @@ body {
 }
 
 .planer-mode-icon {
+  display: block;
   font-family: var(--font-mono);
   font-size: 24px;
   font-weight: 700;
@@ -1760,6 +1760,7 @@ body {
 }
 
 .planer-mode-label {
+  display: block;
   font-size: 12px;
   font-weight: 700;
   color: var(--text);
@@ -1770,6 +1771,7 @@ body {
 }
 
 .planer-mode-desc {
+  display: block;
   font-size: 10px;
   color: var(--text-muted);
   line-height: 1.4;
@@ -1886,6 +1888,224 @@ body {
 }
 
 /* ═══════════════════ CONFIRM MODAL ═══════════════════ */
+
+/* ═══════════════════ SCHUL-MODUS NOTEN ═══════════════════ */
+.sp-schule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+}
+
+.sp-fach-card {
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  transition: border-color 0.15s ease;
+}
+
+.sp-fach-card:hover {
+  border-color: var(--text-muted);
+}
+
+.sp-fach-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dotted var(--border-dashed);
+}
+
+.sp-fach-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.sp-fach-name-input {
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 2px 6px;
+  outline: none;
+  transition: all 0.15s ease;
+  width: 100%;
+  max-width: 300px;
+}
+
+.sp-fach-name-input:hover,
+.sp-fach-name-input:focus {
+  background: var(--bg-input);
+  border-color: var(--border);
+}
+
+.sp-fach-lehrer-input {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 2px 6px;
+  outline: none;
+  transition: all 0.15s ease;
+  width: 100%;
+  max-width: 200px;
+  letter-spacing: 0.3px;
+}
+
+.sp-fach-lehrer-input:hover,
+.sp-fach-lehrer-input:focus {
+  background: var(--bg-input);
+  border-color: var(--border);
+}
+
+.sp-fach-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sp-fach-schnitt {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.sp-schnitt-gut { color: #22a355; }
+.sp-schnitt-ok { color: var(--text); }
+.sp-schnitt-warn { color: #d4a520; }
+.sp-schnitt-schlecht { color: var(--red); }
+
+.sp-noten-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .sp-noten-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sp-noten-type {
+  background: var(--bg-input);
+  padding: 10px;
+  border: 1px dashed var(--border-dashed);
+}
+
+.sp-noten-type-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sp-noten-type-label {
+  font-size: 9px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+.sp-noten-weight {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 8px;
+}
+
+.sp-noten-type-avg {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sp-noten-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.sp-note-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sp-note-chip:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-light);
+}
+
+.sp-note-gut { border-color: #22a355; color: #22a355; }
+.sp-note-ok { border-color: var(--text); color: var(--text); }
+.sp-note-warn { border-color: #d4a520; color: #d4a520; }
+.sp-note-schlecht { border-color: var(--red); color: var(--red); }
+
+.sp-note-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px dashed var(--border-dashed);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sp-note-add-btn:hover {
+  border-color: var(--text);
+  color: var(--text);
+  border-style: solid;
+}
+
+.sp-note-inline-input {
+  width: 36px;
+  height: 26px;
+  border: 1px solid var(--text);
+  background: var(--bg-card);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  padding: 0;
+}
+
+.sp-note-inline-input::-webkit-inner-spin-button,
+.sp-note-inline-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ═══════════════════ CONFIRM MODAL (rest) ═══════════════════ */
 .confirm-modal {
   max-width: 360px;
   padding: 28px;

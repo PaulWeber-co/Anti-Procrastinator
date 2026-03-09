@@ -428,7 +428,7 @@ const View = {
     var self = this;
     var html = '';
     var periodLabel = config.periodLabel;
-    var isSchule = mode === 'schule';
+    var isSchule = config.isSchule || false;
 
     data.forEach(function(period, idx) {
       var pStats = Model.getPeriodStats(idx);
@@ -441,7 +441,7 @@ const View = {
         statusBadge = '<span class="sp-sem-badge sp-sem-badge-done">' + (pStats.avg !== null ? pStats.avg.toFixed(1) : '--') + '</span>';
         statusClass = ' sp-semester-done';
       } else if (pStats.completed > 0) {
-        var info = config.hasEcts ? (pStats.completed + ' / ' + pStats.total) : (pStats.completed + ' / ' + pStats.total);
+        var info = pStats.completed + ' / ' + pStats.total;
         statusBadge = '<span class="sp-sem-badge sp-sem-badge-partial">' + info + '</span>';
         statusClass = ' sp-semester-partial';
       } else {
@@ -454,7 +454,7 @@ const View = {
           + '<span class="sp-chevron' + (isOpen ? ' sp-chevron-open' : '') + '"></span>'
           + '<span class="sp-semester-num">' + period.period + '</span>'
           + '<span class="sp-semester-label">' + periodLabel + ' ' + period.period + '</span>'
-          + '<span class="sp-sem-ects">' + pStats.completed + ' / ' + pStats.total + (config.hasEcts ? ' ECTS' : '') + '</span>'
+          + '<span class="sp-sem-ects">' + pStats.completed + ' / ' + pStats.total + (config.hasEcts ? ' ECTS' : ' Fächer') + '</span>'
         + '</div>'
         + '<div class="sp-semester-header-right">'
           + statusBadge
@@ -463,44 +463,106 @@ const View = {
         + '</div>';
 
       html += '<div class="sp-semester-content' + (isOpen ? ' sp-content-open' : '') + '">';
-      html += '<table class="sp-table">';
-      html += '<thead><tr>'
-        + '<th class="sp-th-name">' + (isSchule ? 'Fach' : 'Modul') + '</th>'
-        + '<th class="sp-th-prof">' + (isSchule ? 'Lehrer' : 'Verantwortlich') + '</th>'
-        + (config.hasEcts ? '<th class="sp-th-ects">ECTS</th>' : '')
-        + '<th class="sp-th-pruef">Prüfung</th>'
-        + '<th class="sp-th-note">Note</th>'
-        + '<th class="sp-th-status">Status</th>'
-        + '<th class="sp-th-del"></th>'
-        + '</tr></thead><tbody>';
 
-      period.modules.forEach(function(mod, mi) {
-        var entry = grades[mod.id] || {};
-        var gradeVal = entry.grade || '';
-        var status = entry.status || 'offen';
-        var statusCls = 'sp-status-offen';
-        if (status === 'bestanden') statusCls = 'sp-status-bestanden';
-        else if (status === 'nicht-bestanden') statusCls = 'sp-status-nb';
-        var rowClass = status === 'bestanden' ? ' sp-row-done' : '';
-        var wabClass = mod.isWab ? ' sp-row-wab' : '';
-        var wabLabel = mod.isWab ? '<span class="sp-wab-label">WAB</span>' : '';
+      if (isSchule) {
+        // ── SCHUL-MODUS: Fächer mit Notentypen ──
+        html += '<div class="sp-schule-list">';
+        period.modules.forEach(function(mod, mi) {
+          var schnitt = Model.calcSchulFachSchnitt(mod);
+          var schnittStr = schnitt !== null ? schnitt.toFixed(1) : '--';
+          var schnittClass = '';
+          if (schnitt !== null) {
+            if (schnitt <= 2.5) schnittClass = ' sp-schnitt-gut';
+            else if (schnitt <= 3.5) schnittClass = ' sp-schnitt-ok';
+            else if (schnitt <= 4.5) schnittClass = ' sp-schnitt-warn';
+            else schnittClass = ' sp-schnitt-schlecht';
+          }
 
-        html += '<tr class="sp-module-row' + rowClass + wabClass + '">'
-          + '<td class="sp-td-name">' + wabLabel + '<input type="text" class="sp-name-input' + (mod.isWab ? ' sp-name-wab' : '') + '" data-period="' + idx + '" data-mod="' + mi + '" data-field="name" value="' + self._escapeAttr(mod.name) + '"></td>'
-          + '<td class="sp-td-prof"><input type="text" class="sp-prof-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="prof" value="' + self._escapeAttr(mod.prof || '') + '" placeholder="--"></td>'
-          + (config.hasEcts ? '<td class="sp-td-ects"><input type="number" class="sp-ects-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="points" value="' + (mod.points || 5) + '" min="1" max="30"></td>' : '')
-          + '<td class="sp-td-pruef"><input type="text" class="sp-pruef-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="pruefung" value="' + self._escapeAttr(mod.pruefung || '') + '" placeholder="--"></td>'
-          + '<td class="sp-td-note"><input type="number" class="sp-grade-input" data-module="' + mod.id + '" value="' + gradeVal + '" min="' + config.gradeMin + '" max="' + config.gradeMax + '" step="' + config.gradeStep + '" placeholder="--"></td>'
-          + '<td class="sp-td-status"><select class="sp-status-select ' + statusCls + '" data-module="' + mod.id + '">'
-            + '<option value="offen"' + (status === 'offen' ? ' selected' : '') + '>Offen</option>'
-            + '<option value="bestanden"' + (status === 'bestanden' ? ' selected' : '') + '>Bestanden</option>'
-            + '<option value="nicht-bestanden"' + (status === 'nicht-bestanden' ? ' selected' : '') + '>Nicht best.</option>'
-          + '</select></td>'
-          + '<td class="sp-td-del"><button class="sp-mod-delete" data-period="' + idx + '" data-mod="' + mi + '" title="Löschen">x</button></td>'
-          + '</tr>';
-      });
+          html += '<div class="sp-fach-card">';
+          html += '<div class="sp-fach-header">';
+          html += '<div class="sp-fach-header-left">';
+          html += '<input type="text" class="sp-fach-name-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="name" value="' + self._escapeAttr(mod.name) + '">';
+          html += '<input type="text" class="sp-fach-lehrer-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="prof" value="' + self._escapeAttr(mod.prof || '') + '" placeholder="Lehrkraft">';
+          html += '</div>';
+          html += '<div class="sp-fach-header-right">';
+          html += '<span class="sp-fach-schnitt' + schnittClass + '">' + schnittStr + '</span>';
+          html += '<button class="sp-mod-delete" data-period="' + idx + '" data-mod="' + mi + '" title="Fach löschen">x</button>';
+          html += '</div>';
+          html += '</div>';
 
-      html += '</tbody></table>';
+          // Notentypen
+          html += '<div class="sp-noten-grid">';
+          Model.SCHULE_NOTE_TYPES.forEach(function(type) {
+            var noten = (mod.noten && mod.noten[type.key]) || [];
+            var typeAvg = noten.length > 0 ? (noten.reduce(function(s,v){return s+v;},0) / noten.length).toFixed(1) : '--';
+
+            html += '<div class="sp-noten-type">';
+            html += '<div class="sp-noten-type-header">';
+            html += '<span class="sp-noten-type-label">' + type.label + ' <span class="sp-noten-weight">(x' + type.weight + ')</span></span>';
+            html += '<span class="sp-noten-type-avg">' + typeAvg + '</span>';
+            html += '</div>';
+            html += '<div class="sp-noten-chips">';
+
+            noten.forEach(function(note, ni) {
+              var noteClass = 'sp-note-chip';
+              if (note <= 2) noteClass += ' sp-note-gut';
+              else if (note <= 3) noteClass += ' sp-note-ok';
+              else if (note <= 4) noteClass += ' sp-note-warn';
+              else noteClass += ' sp-note-schlecht';
+              html += '<span class="' + noteClass + '" data-period="' + idx + '" data-mod="' + mi + '" data-type="' + type.key + '" data-note-idx="' + ni + '">' + note + '</span>';
+            });
+
+            html += '<button class="sp-note-add-btn" data-period="' + idx + '" data-mod="' + mi + '" data-type="' + type.key + '" title="Note hinzufügen">+</button>';
+            html += '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+
+          html += '</div>';
+        });
+        html += '</div>';
+      } else {
+        // ── UNI-MODUS: Tabelle wie bisher ──
+        html += '<table class="sp-table">';
+        html += '<thead><tr>'
+          + '<th class="sp-th-name">Modul</th>'
+          + '<th class="sp-th-prof">Verantwortlich</th>'
+          + (config.hasEcts ? '<th class="sp-th-ects">ECTS</th>' : '')
+          + '<th class="sp-th-pruef">Prüfung</th>'
+          + '<th class="sp-th-note">Note</th>'
+          + '<th class="sp-th-status">Status</th>'
+          + '<th class="sp-th-del"></th>'
+          + '</tr></thead><tbody>';
+
+        period.modules.forEach(function(mod, mi) {
+          var entry = grades[mod.id] || {};
+          var gradeVal = entry.grade || '';
+          var status = entry.status || 'offen';
+          var statusCls = 'sp-status-offen';
+          if (status === 'bestanden') statusCls = 'sp-status-bestanden';
+          else if (status === 'nicht-bestanden') statusCls = 'sp-status-nb';
+          var rowClass = status === 'bestanden' ? ' sp-row-done' : '';
+          var wabClass = mod.isWab ? ' sp-row-wab' : '';
+          var wabLabel = mod.isWab ? '<span class="sp-wab-label">WAB</span>' : '';
+
+          html += '<tr class="sp-module-row' + rowClass + wabClass + '">'
+            + '<td class="sp-td-name">' + wabLabel + '<input type="text" class="sp-name-input' + (mod.isWab ? ' sp-name-wab' : '') + '" data-period="' + idx + '" data-mod="' + mi + '" data-field="name" value="' + self._escapeAttr(mod.name) + '"></td>'
+            + '<td class="sp-td-prof"><input type="text" class="sp-prof-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="prof" value="' + self._escapeAttr(mod.prof || '') + '" placeholder="--"></td>'
+            + (config.hasEcts ? '<td class="sp-td-ects"><input type="number" class="sp-ects-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="points" value="' + (mod.points || 5) + '" min="1" max="30"></td>' : '')
+            + '<td class="sp-td-pruef"><input type="text" class="sp-pruef-input" data-period="' + idx + '" data-mod="' + mi + '" data-field="pruefung" value="' + self._escapeAttr(mod.pruefung || '') + '" placeholder="--"></td>'
+            + '<td class="sp-td-note"><input type="number" class="sp-grade-input" data-module="' + mod.id + '" value="' + gradeVal + '" min="' + config.gradeMin + '" max="' + config.gradeMax + '" step="' + config.gradeStep + '" placeholder="--"></td>'
+            + '<td class="sp-td-status"><select class="sp-status-select ' + statusCls + '" data-module="' + mod.id + '">'
+              + '<option value="offen"' + (status === 'offen' ? ' selected' : '') + '>Offen</option>'
+              + '<option value="bestanden"' + (status === 'bestanden' ? ' selected' : '') + '>Bestanden</option>'
+              + '<option value="nicht-bestanden"' + (status === 'nicht-bestanden' ? ' selected' : '') + '>Nicht best.</option>'
+            + '</select></td>'
+            + '<td class="sp-td-del"><button class="sp-mod-delete" data-period="' + idx + '" data-mod="' + mi + '" title="Löschen">x</button></td>'
+            + '</tr>';
+        });
+
+        html += '</tbody></table>';
+      }
+
       html += '<button class="sp-add-module-btn" data-add-mod="' + idx + '">+ ' + (isSchule ? 'Fach' : 'Modul') + ' hinzufügen</button>';
       html += '</div></div>';
     });
@@ -513,9 +575,11 @@ const View = {
     this.el('spAverage').textContent = stats.gradedPoints > 0 ? stats.average.toFixed(2) : '--';
     var pointsStr = stats.completedPoints + ' / ' + stats.totalPoints;
     this.el('spEctsComplete').textContent = pointsStr;
-    this.el('studienplanSummary').textContent = pointsStr + (config.hasEcts ? ' ECTS' : ' Fächer');
+    var suffix = config.hasEcts ? ' ECTS' : (config.isSchule ? ' Fächer benotet' : ' Fächer');
+    this.el('studienplanSummary').textContent = pointsStr + suffix;
     this.el('planerPointsLabel').textContent = config.pointsLabel;
     var pct = stats.totalPoints > 0 ? Math.round((stats.completedPoints / stats.totalPoints) * 100) : 0;
+    this.el('spProgressFill').className = 'sp-progress-fill';
     this.el('spProgressFill').style.width = pct + '%';
   },
 

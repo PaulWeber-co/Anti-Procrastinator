@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Anti Procrastinator",
-  "version": "1.2.0",
-  "description": "Dein persönlicher Produktivitäts-Hub — To-Do, Kalender, Studienplan.",
+  "version": "1.3.0",
+  "description": "Dein persönlicher Produktivitäts-Hub — To-Do, Kalender, Planer (Schule/Uni/Provadis).",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

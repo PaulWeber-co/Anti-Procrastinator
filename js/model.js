@@ -358,10 +358,38 @@ const Model = {
   // ── Planer (generisch: Schule / Uni / Provadis) ──
 
   PLANER_MODES: {
-    schule: { label: 'Stundenplan', periodLabel: 'Klasse', pointsLabel: 'Fächer', gradeMin: 1, gradeMax: 6, gradeStep: 1, hasEcts: false, bestNote: 1 },
-    uni: { label: 'Studienplan', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0 },
-    provadis: { label: 'Studienplan Provadis', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0 },
+    schule: { label: 'Schulplaner', periodLabel: 'Klasse', pointsLabel: 'Fächer bestanden', gradeMin: 1, gradeMax: 6, gradeStep: 1, hasEcts: false, bestNote: 1, isSchule: true },
+    uni: { label: 'Studienplan', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false },
+    provadis: { label: 'Studienplan Provadis', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false },
   },
+
+  // ── Schul-Fächer nach Klassenstufe ──
+  // Fächer die in jeder Klasse vorkommen
+  SCHULE_FAECHER_CORE: [
+    'Deutsch', 'Mathematik', 'Englisch', 'Sport', 'Religion/Ethik',
+  ],
+
+  // Zusätzliche Fächer je Klassenstufe
+  SCHULE_FAECHER_BY_KLASSE: {
+    5:  ['Geschichte', 'Geographie', 'Biologie', 'Musik', 'Kunst', 'Natur und Technik'],
+    6:  ['Geschichte', 'Geographie', 'Biologie', 'Musik', 'Kunst', 'Natur und Technik', '2. Fremdsprache (Latein/Französisch)'],
+    7:  ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Musik', 'Kunst', '2. Fremdsprache (Latein/Französisch)', 'Informatik'],
+    8:  ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Chemie', 'Musik', 'Kunst', '2. Fremdsprache (Latein/Französisch)', 'Informatik'],
+    9:  ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Chemie', 'Sozialkunde', 'Musik', 'Kunst', '2. Fremdsprache (Latein/Französisch)', 'Informatik', 'Wirtschaft und Recht'],
+    10: ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Chemie', 'Sozialkunde', 'Musik', 'Kunst', '2. Fremdsprache (Latein/Französisch)', 'Informatik', 'Wirtschaft und Recht'],
+    11: ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Chemie', 'Sozialkunde', 'Musik', 'Kunst', 'Informatik', 'Wirtschaft und Recht', 'W-Seminar', 'P-Seminar'],
+    12: ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Chemie', 'Sozialkunde', 'Musik', 'Kunst', 'Informatik', 'Wirtschaft und Recht', 'W-Seminar', 'P-Seminar'],
+    13: ['Geschichte', 'Biologie', 'Physik', 'Chemie', 'Sozialkunde', 'W-Seminar', 'P-Seminar'],
+  },
+
+  // ── Noten-Typen für Schule ──
+  // Schulaufgabe (groß, zählt doppelt), Ex (klein, zählt halb so viel), Mündlich
+  // Gewichtung: Schulaufgabe : Ex : Mündlich = 2 : 1 : 1
+  SCHULE_NOTE_TYPES: [
+    { key: 'schulaufgabe', label: 'Schulaufgaben', shortLabel: 'SA', weight: 2 },
+    { key: 'ex', label: 'Exen', shortLabel: 'Ex', weight: 1 },
+    { key: 'muendlich', label: 'Mündliche Noten', shortLabel: 'Mdl', weight: 1 },
+  ],
 
   PROVADIS_DATA: [
     { period: 1, modules: [
@@ -452,16 +480,23 @@ const Model = {
         };
       });
     } else if (mode === 'schule') {
+      // Standard: Klasse 5-10, Benutzer kann später Klassen hinzufügen/entfernen
       data = [];
-      for (var k = 5; k <= 13; k++) {
+      for (var k = 5; k <= 10; k++) {
+        var faecher = this._getSchulFaecherForKlasse(k);
         data.push({
           period: k,
-          modules: [
-            { id: 'k' + k + '_m0', name: 'Mathematik', points: 1, pruefung: 'Klausur', prof: '' },
-            { id: 'k' + k + '_m1', name: 'Deutsch', points: 1, pruefung: 'Klausur', prof: '' },
-            { id: 'k' + k + '_m2', name: 'Englisch', points: 1, pruefung: 'Klausur', prof: '' },
-            { id: 'k' + k + '_m3', name: 'Sport', points: 1, pruefung: 'Praktisch', prof: '' },
-          ]
+          modules: faecher.map(function(name, fi) {
+            return {
+              id: 'k' + k + '_m' + fi,
+              name: name,
+              points: 1,
+              pruefung: '',
+              prof: '',
+              // Schulnoten-Felder: Arrays für mehrere Noten pro Typ
+              noten: { schulaufgabe: [], ex: [], muendlich: [] }
+            };
+          })
         });
       }
     } else {
@@ -480,17 +515,43 @@ const Model = {
     this.savePlanerData(data);
   },
 
+  _getSchulFaecherForKlasse(klasse) {
+    var core = this.SCHULE_FAECHER_CORE.slice();
+    var extra = this.SCHULE_FAECHER_BY_KLASSE[klasse] || this.SCHULE_FAECHER_BY_KLASSE[10];
+    return core.concat(extra);
+  },
+
   addPeriod() {
     var data = this.getPlanerData();
     var mode = this.getPlanerMode();
+    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.uni;
     var nextNum = data.length > 0 ? data[data.length - 1].period + 1 : 1;
     var prefix = mode === 'schule' ? 'k' : (mode === 'provadis' ? 'p' : 'u');
-    data.push({
-      period: nextNum,
-      modules: [
-        { id: prefix + nextNum + '_m0', name: mode === 'schule' ? 'Neues Fach' : 'Neues Modul', points: mode === 'schule' ? 1 : 5, pruefung: 'Klausur', prof: '' }
-      ]
-    });
+
+    if (config.isSchule) {
+      // Für Schule: Fächer der nächsten Klasse laden
+      var faecher = this._getSchulFaecherForKlasse(nextNum);
+      data.push({
+        period: nextNum,
+        modules: faecher.map(function(name, fi) {
+          return {
+            id: prefix + nextNum + '_m' + fi + '_' + Date.now(),
+            name: name,
+            points: 1,
+            pruefung: '',
+            prof: '',
+            noten: { schulaufgabe: [], ex: [], muendlich: [] }
+          };
+        })
+      });
+    } else {
+      data.push({
+        period: nextNum,
+        modules: [
+          { id: prefix + nextNum + '_m0', name: 'Neues Modul', points: 5, pruefung: 'Klausur', prof: '' }
+        ]
+      });
+    }
     this.savePlanerData(data);
     return data;
   },
@@ -502,13 +563,17 @@ const Model = {
     var mCount = data[periodIdx].modules.length;
     var prefix = mode === 'schule' ? 'k' : (mode === 'provadis' ? 'p' : 'u');
     var id = prefix + periodIdx + '_m' + mCount + '_' + Date.now();
-    data[periodIdx].modules.push({
+    var newMod = {
       id: id,
       name: mode === 'schule' ? 'Neues Fach' : 'Neues Modul',
       points: mode === 'schule' ? 1 : 5,
-      pruefung: 'Klausur',
+      pruefung: mode === 'schule' ? '' : 'Klausur',
       prof: ''
-    });
+    };
+    if (mode === 'schule') {
+      newMod.noten = { schulaufgabe: [], ex: [], muendlich: [] };
+    }
+    data[periodIdx].modules.push(newMod);
     this.savePlanerData(data);
     return data;
   },
@@ -568,6 +633,12 @@ const Model = {
   getPlanerStats() {
     var mode = this.getPlanerMode();
     var config = this.PLANER_MODES[mode] || this.PLANER_MODES.uni;
+
+    // Schul-Modus hat eigene Berechnung
+    if (config.isSchule) {
+      return this.getSchulGesamtSchnitt();
+    }
+
     var data = this.getPlanerData();
     var grades = this.getGrades();
     var totalPoints = 0;
@@ -595,6 +666,13 @@ const Model = {
   },
 
   isPeriodComplete(periodIdx) {
+    var mode = this.getPlanerMode();
+    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.uni;
+
+    if (config.isSchule) {
+      return this.isSchulPeriodComplete(periodIdx);
+    }
+
     var data = this.getPlanerData();
     var grades = this.getGrades();
     var period = data[periodIdx];
@@ -608,6 +686,11 @@ const Model = {
   getPeriodStats(periodIdx) {
     var mode = this.getPlanerMode();
     var config = this.PLANER_MODES[mode] || this.PLANER_MODES.uni;
+
+    if (config.isSchule) {
+      return this.getSchulPeriodStats(periodIdx);
+    }
+
     var data = this.getPlanerData();
     var grades = this.getGrades();
     var period = data[periodIdx];
@@ -623,6 +706,127 @@ const Model = {
       }
     });
     return { total: total, completed: completed, avg: gPts > 0 ? wSum / gPts : null };
+  },
+
+  // ── Schul-Noten Verwaltung ──
+
+  addSchulNote(periodIdx, moduleIdx, noteType, value) {
+    var data = this.getPlanerData();
+    if (!data[periodIdx] || !data[periodIdx].modules[moduleIdx]) return data;
+    var mod = data[periodIdx].modules[moduleIdx];
+    if (!mod.noten) mod.noten = { schulaufgabe: [], ex: [], muendlich: [] };
+    var grade = parseInt(value);
+    if (grade >= 1 && grade <= 6) {
+      mod.noten[noteType].push(grade);
+    }
+    this.savePlanerData(data);
+    return data;
+  },
+
+  removeSchulNote(periodIdx, moduleIdx, noteType, noteIdx) {
+    var data = this.getPlanerData();
+    if (!data[periodIdx] || !data[periodIdx].modules[moduleIdx]) return data;
+    var mod = data[periodIdx].modules[moduleIdx];
+    if (mod.noten && mod.noten[noteType]) {
+      mod.noten[noteType].splice(noteIdx, 1);
+    }
+    this.savePlanerData(data);
+    return data;
+  },
+
+  /**
+   * Berechnet den gewichteten Schnitt eines Schul-Fachs.
+   * Schulaufgaben zählen doppelt (Gewicht 2), Exen und Mündlich je Gewicht 1.
+   * Alle Noten innerhalb eines Typs werden zuerst gemittelt, dann gewichtet.
+   */
+  calcSchulFachSchnitt(mod) {
+    if (!mod.noten) return null;
+    var types = this.SCHULE_NOTE_TYPES;
+    var totalWeight = 0;
+    var weightedSum = 0;
+
+    for (var i = 0; i < types.length; i++) {
+      var t = types[i];
+      var arr = mod.noten[t.key] || [];
+      if (arr.length > 0) {
+        var avg = arr.reduce(function(s, v) { return s + v; }, 0) / arr.length;
+        weightedSum += avg * t.weight;
+        totalWeight += t.weight;
+      }
+    }
+
+    return totalWeight > 0 ? weightedSum / totalWeight : null;
+  },
+
+  /**
+   * Berechnet Schul-Statistiken für eine Klasse (period).
+   */
+  getSchulPeriodStats(periodIdx) {
+    var data = this.getPlanerData();
+    var period = data[periodIdx];
+    if (!period) return { total: 0, completed: 0, avg: null };
+
+    var total = period.modules.length;
+    var completed = 0;
+    var sumAvg = 0;
+    var countAvg = 0;
+
+    var self = this;
+    period.modules.forEach(function(mod) {
+      var schnitt = self.calcSchulFachSchnitt(mod);
+      if (schnitt !== null) {
+        completed++;
+        sumAvg += schnitt;
+        countAvg++;
+      }
+    });
+
+    return {
+      total: total,
+      completed: completed,
+      avg: countAvg > 0 ? sumAvg / countAvg : null
+    };
+  },
+
+  /**
+   * Gesamt-Schnitt über alle Schul-Fächer aller Klassen.
+   */
+  getSchulGesamtSchnitt() {
+    var data = this.getPlanerData();
+    var sumAvg = 0;
+    var countAvg = 0;
+    var totalFaecher = 0;
+    var completedFaecher = 0;
+
+    var self = this;
+    data.forEach(function(period) {
+      period.modules.forEach(function(mod) {
+        totalFaecher++;
+        var schnitt = self.calcSchulFachSchnitt(mod);
+        if (schnitt !== null) {
+          completedFaecher++;
+          sumAvg += schnitt;
+          countAvg++;
+        }
+      });
+    });
+
+    return {
+      totalPoints: totalFaecher,
+      completedPoints: completedFaecher,
+      average: countAvg > 0 ? sumAvg / countAvg : 0,
+      gradedPoints: countAvg
+    };
+  },
+
+  isSchulPeriodComplete(periodIdx) {
+    var data = this.getPlanerData();
+    var period = data[periodIdx];
+    if (!period || period.modules.length === 0) return false;
+    var self = this;
+    return period.modules.every(function(mod) {
+      return self.calcSchulFachSchnitt(mod) !== null;
+    });
   },
 
   // ── Legacy compat ──

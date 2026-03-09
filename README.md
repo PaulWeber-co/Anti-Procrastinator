@@ -1,39 +1,74 @@
 # Anti Procrastinator
 
-Eine minimalistische Produktivitaets-Web-App im Notion-Stil mit MVC-Architektur.
+Minimalistischer Produktivitäts-Hub als Chrome Extension oder Webseite. Notion-inspiriertes Design mit MVC-Architektur.
 
 ## Features
 
-- Echtzeituhr (Europe/Berlin Zeitzone)
-- Wetter-Widget mit Standorterkennung (Open-Meteo API)
-- To-Do Liste mit Kategorien, Datumszuweisung und Story Points
-- Interaktiver Monatskalender mit Task-Indikatoren
-- Fortschritts-Diagramme (Abschlussrate + Story Points, Kategorieverteilung)
-- Statistik-Karten (Gesamt, Erledigt, Offen, Rate, Punkte)
-- Studienplan Informatik B.Sc. mit Notenerfassung und Durchschnittsberechnung
-- Dark/Light Mode
-- Lokale Datenspeicherung (localStorage)
-- Responsive Design
+- Echtzeituhr mit Datum (Europe/Berlin)
+- Wetter-Widget (Open-Meteo API, kein API-Key nötig)
+- To-Do Liste mit Kategorien, Kalender-Anbindung und Story Points
+- Interaktiver Monatskalender (erweiterbar, ICS-Import)
+- Fortschritts-Diagramme (Woche / Monat / Jahr + Kategorieverteilung)
+- **Planer** mit 3 Modi:
+  - **Schule** — Klassen 5–13, klassenspezifische Fächer, Notentypen (Schulaufgaben, Exen, Mündlich) mit korrekter Gewichtung
+  - **Universität** — Frei konfigurierbare Semester, Module, ECTS, Noten
+  - **Provadis** — Informatik B.Sc. mit allen Modulen vorausgefüllt
+- Dark/Light Mode (Nothing Dot Design)
+- Persistente Datenspeicherung (localStorage / chrome.storage)
+
+## Schnellstart
+
+### Als Webseite
+
+```bash
+cd NotionTemplate
+python3 -m http.server 8080
+# Öffne http://localhost:8080
+```
+
+Oder einfach `index.html` im Browser öffnen.
+
+### Als Chrome Extension
+
+1. Chrome → `chrome://extensions/`
+2. **Entwicklermodus** aktivieren (oben rechts)
+3. **Entpackte Erweiterung laden** → `NotionTemplate`-Ordner auswählen
+4. Fertig! Jeder neue Tab zeigt Anti Procrastinator
+
+> Die Icons sind bereits enthalten — kein zusätzlicher Setup nötig.
+
+### Als Firefox Extension
+
+1. Firefox → `about:debugging#/runtime/this-firefox`
+2. **Temporäres Add-on laden** → `manifest.json` auswählen
+
+### Als Edge Extension
+
+1. Edge → `edge://extensions/`
+2. **Entwicklermodus** → **Entpackte Erweiterung laden** → Ordner auswählen
 
 ## Architektur (MVC)
 
 ```
-index.html          HTML-Struktur (View-Template)
-css/style.css       Styling & Theming
-js/model.js         Datenlogik & localStorage-Persistenz
-js/view.js          DOM-Manipulation & Rendering
-js/controller.js    Event-Handling & Verbindung Model/View
+index.html          HTML-Struktur
+css/style.css       Styling & Theming (Nothing Dot Design)
+js/storage.js       Speicher-Abstraktionsschicht
+js/model.js         Datenlogik & Persistenz
+js/view.js          DOM-Rendering
+js/controller.js    Event-Handling & Steuerung
+js/init.js          App-Start
 ```
 
-## Nutzung
+## Datenspeicherung
 
-```bash
-open index.html
-```
+| Modus | Speicherort | Persistent? |
+|-------|-------------|-------------|
+| Webseite | `localStorage` | Ja (bis Cache gelöscht) |
+| Chrome Extension | `chrome.storage.local` | Ja (überlebt Cache-Clear) |
 
 ## Technologien
 
-- HTML / CSS / JavaScript (kein Build-Tool)
-- Chart.js (CDN)
-- Inter Font (Google Fonts)
-- Open-Meteo (Wetter-API, kein Key noetig)
+- HTML / CSS / Vanilla JavaScript (kein Build-Tool)
+- Chart.js (lokal eingebunden)
+- Space Grotesk + Space Mono (Google Fonts)
+- Open-Meteo (Wetter-API, kein Key nötig)
