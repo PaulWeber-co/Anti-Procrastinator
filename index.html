@@ -8,88 +8,85 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <script src="js/chart.min.js"></script>
 </head>
 <body>
 
-  <!-- ════════════ HEADER ════════════ -->
-  <header class="header">
-    <div class="header-left">
+  <!-- ════════════ TOOLBAR ════════════ -->
+  <div class="toolbar">
+    <div class="toolbar-left">
       <div class="logo">
         <div class="logo-mark">AP</div>
         Anti Procrastinator
       </div>
-      <div>
-        <div class="clock" id="clock">--:--:--</div>
-        <div class="clock-date" id="clockDate">---</div>
-      </div>
     </div>
-    <div class="header-right">
-      <div class="weather">
-        <span class="weather-icon" id="weatherIcon">--</span>
-        <div>
-          <div class="weather-temp" id="weatherTemp">--</div>
-          <div class="weather-desc" id="weatherDesc">Laden...</div>
-        </div>
-      </div>
-      <button class="btn-header" id="studienplanBtn">Planer</button>
-      <button class="theme-toggle" id="themeToggle">Dark</button>
+    <div class="toolbar-right">
+      <button class="btn-toolbar" id="studienplanBtn">Planer</button>
+      <button class="btn-toolbar theme-toggle" id="themeToggle">Dark</button>
     </div>
-  </header>
+  </div>
 
   <!-- ════════════ PLANER MODAL ════════════ -->
   <div class="modal-overlay" id="studienplanOverlay">
-    <div class="modal">
+    <div class="modal planer-modal">
       <div class="modal-header">
         <div>
           <div class="modal-title" id="planerTitle">Planer</div>
           <div class="modal-subtitle" id="studienplanSummary"></div>
         </div>
-        <button class="modal-close" id="studienplanClose">x</button>
+        <button class="modal-close" id="studienplanClose">✕</button>
       </div>
 
-      <!-- Modus-Auswahl (nur sichtbar wenn noch kein Modus gewählt) -->
+      <!-- Mode Select -->
       <div class="planer-mode-select" id="planerModeSelect">
-        <div class="planer-mode-title">Wähle deinen Planer-Typ</div>
+        <div class="planer-mode-title">Wähle deinen Planer</div>
         <div class="planer-mode-grid">
           <button class="planer-mode-btn" data-mode="schule">
-            <span class="planer-mode-icon">S</span>
+            <div class="planer-mode-icon-wrap"><span class="planer-mode-icon">.:S:.</span></div>
             <span class="planer-mode-label">Schule</span>
-            <span class="planer-mode-desc">Klassen 5-13, Fächer, Schulnoten (1-6), Schulaufgaben, Exen, Mündlich</span>
+            <span class="planer-mode-desc">Klassen 5–13 · Schulaufgaben, Exen, Mündlich · Noten 1–6</span>
           </button>
-          <button class="planer-mode-btn" data-mode="uni">
-            <span class="planer-mode-icon">U</span>
-            <span class="planer-mode-label">Universität</span>
-            <span class="planer-mode-desc">Semester, Module, ECTS, Noten (1.0-5.0)</span>
+          <button class="planer-mode-btn" data-mode="bachelor">
+            <div class="planer-mode-icon-wrap"><span class="planer-mode-icon">.:B:.</span></div>
+            <span class="planer-mode-label">Bachelor</span>
+            <span class="planer-mode-desc">Universität · Semester · Module · ECTS · Noten 1.0–5.0</span>
+          </button>
+          <button class="planer-mode-btn" data-mode="master">
+            <div class="planer-mode-icon-wrap"><span class="planer-mode-icon">.:M:.</span></div>
+            <span class="planer-mode-label">Master</span>
+            <span class="planer-mode-desc">Universität · Semester · Module · ECTS · Noten 1.0–5.0</span>
           </button>
           <button class="planer-mode-btn" data-mode="provadis">
-            <span class="planer-mode-icon">P</span>
+            <div class="planer-mode-icon-wrap"><span class="planer-mode-icon">.:P:.</span></div>
             <span class="planer-mode-label">Provadis</span>
-            <span class="planer-mode-desc">Informatik B.Sc. — alle Module vorausgefüllt</span>
+            <span class="planer-mode-desc">Informatik B.Sc. · Alle 6 Semester vorausgefüllt</span>
           </button>
         </div>
-        <div class="planer-mode-hint">Du kannst den Modus später unter dem Planer ändern.</div>
       </div>
 
-      <!-- Planer-Body (wird dynamisch befüllt) -->
-      <div class="modal-body sync-hidden" id="studienplanBody"></div>
-      <div class="modal-footer sync-hidden" id="planerFooter">
-        <div class="sp-avg-row">
-          <span class="sp-avg-label">Gewichteter Notendurchschnitt</span>
-          <span class="sp-avg-value" id="spAverage">--</span>
+      <!-- Tab Navigation -->
+      <div class="sp-tabs-wrap sync-hidden" id="spTabsWrap">
+        <div class="sp-stats-bar">
+          <div class="sp-stat-pill">
+            <span class="sp-stat-pill-label">Schnitt</span>
+            <span class="sp-stat-pill-value" id="spAverage">--</span>
+          </div>
+          <div class="sp-stat-pill">
+            <span class="sp-stat-pill-label" id="planerPointsLabel">ECTS</span>
+            <span class="sp-stat-pill-value" id="spEctsComplete">0/0</span>
+          </div>
+          <div class="sp-progress-bar-mini">
+            <div class="sp-progress-fill-mini" id="spProgressFill"></div>
+          </div>
+          <div class="sp-tabs-actions">
+            <button class="sp-action-btn" id="planerAddPeriod" title="Zeitraum hinzufügen">+</button>
+            <button class="sp-action-btn sp-action-danger" id="planerReset" title="Modus ändern">⟳</button>
+          </div>
         </div>
-        <div class="sp-avg-row">
-          <span class="sp-avg-label" id="planerPointsLabel">ECTS abgeschlossen</span>
-          <span class="sp-avg-value" id="spEctsComplete">0 / 0</span>
-        </div>
-        <div class="sp-progress-bar">
-          <div class="sp-progress-fill" id="spProgressFill"></div>
-        </div>
-        <div class="planer-footer-actions">
-          <button class="btn planer-add-period-btn" id="planerAddPeriod">+ Zeitraum hinzufügen</button>
-          <button class="btn planer-reset-btn" id="planerReset">Modus ändern</button>
-        </div>
+        <div class="sp-tabs" id="spTabs"></div>
       </div>
+
+      <!-- Content Area -->
+      <div class="modal-body sync-hidden" id="studienplanBody"></div>
     </div>
   </div>
 
@@ -104,70 +101,166 @@
     </div>
   </div>
 
-  <!-- ════════════ MAIN ════════════ -->
-  <div class="main">
+  <!-- ════════════ KALENDER SYNC MODAL ════════════ -->
+  <div class="modal-overlay" id="calSyncOverlay">
+    <div class="modal cal-sync-modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Kalender Synchronisation</div>
+          <div class="modal-subtitle">Apple / Google Kalender verbinden</div>
+        </div>
+        <button class="modal-close" id="calSyncClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="sync-section">
+          <div class="sync-section-title">Kalender-URL Abonnement</div>
+          <div class="sync-section-desc">Füge eine öffentliche .ics-URL ein. Die Termine werden automatisch alle 15 Minuten synchronisiert.</div>
+          <div class="sync-url-row">
+            <label for="syncUrlInput" class="sr-only">Kalender-URL</label>
+            <input type="text" class="sync-url-input" id="syncUrlInput" placeholder="https://calendar.google.com/...basic.ics" />
+            <button class="btn btn-primary" id="syncUrlSave">Verbinden</button>
+          </div>
+          <div class="sync-url-status" id="syncUrlStatus"></div>
+          <div class="sync-help">
+            <div class="sync-help-title">Wo finde ich die URL?</div>
+            <div class="sync-help-item"><strong>Apple iCloud:</strong> icloud.com/calendar → Kalender teilen → Öffentlicher Kalender → Link kopieren</div>
+            <div class="sync-help-item"><strong>Google Calendar:</strong> Einstellungen → Kalender → Integration → Geheime iCal-Adresse kopieren</div>
+            <div class="sync-help-item"><strong>Outlook:</strong> Einstellungen → Kalender veröffentlichen → ICS-Link kopieren</div>
+          </div>
+        </div>
+        <div class="sync-section">
+          <div class="sync-section-title">Datei importieren</div>
+          <div class="sync-section-desc">Exportiere deinen Kalender als .ics-Datei und lade sie hier hoch.</div>
+          <div class="sync-drop-zone" id="syncDropZone">
+            <div class="sync-drop-label">.ics-Datei hierher ziehen oder klicken</div>
+            <input type="file" id="calIcsFile" accept=".ics" class="sr-only" />
+          </div>
+        </div>
+        <div class="sync-section sync-hidden" id="syncEventsSection">
+          <div class="sync-section-title">Synchronisierte Termine</div>
+          <div class="sync-events-count" id="syncEventsCount"></div>
+          <button class="btn sync-clear-btn" id="syncClearBtn">Sync-Termine löschen</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-value stat-accent" id="statTotal">0</div>
-        <div class="stat-label">Gesamt</div>
+  <!-- ════════════ WIDGET CANVAS ════════════ -->
+  <div class="widget-canvas" id="widgetCanvas">
+
+    <!-- Clock Widget -->
+    <div class="widget" data-widget-id="clock">
+      <div class="widget-header">
+        <span class="widget-header-title">Uhr</span>
+        <button class="clock-toggle-btn" id="clockToggle" title="Analog / Digital">⟳</button>
       </div>
-      <div class="stat-card">
-        <div class="stat-value stat-green" id="statDone">0</div>
-        <div class="stat-label">Erledigt</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value stat-orange" id="statOpen">0</div>
-        <div class="stat-label">Offen</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value stat-purple" id="statRate">0%</div>
-        <div class="stat-label">Rate</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value stat-green" id="statPoints">0 / 0</div>
-        <div class="stat-label">Punkte</div>
+      <div class="widget-body widget-body-clock">
+        <div class="clock-digital" id="clockDigital">
+          <div class="clock" id="clock">--:--:--</div>
+          <div class="clock-date" id="clockDate">---</div>
+        </div>
+        <canvas class="clock-analog-canvas" id="analogClock"></canvas>
       </div>
     </div>
 
-    <!-- To-Do -->
-    <div class="card" id="todoCard">
-      <div class="card-title">Aufgaben</div>
-      <div class="todo-input-row">
-        <label for="todoInput" class="sr-only">Aufgabe</label>
-        <input type="text" id="todoInput" placeholder="Neue Aufgabe..." />
-        <label for="todoDate" class="sr-only">Datum</label>
-        <input type="date" id="todoDate" />
-        <label for="todoCategory" class="sr-only">Kategorie</label>
-        <select id="todoCategory">
-          <option value="arbeit">Arbeit</option>
-          <option value="persoenlich">Persönlich</option>
-          <option value="gesundheit">Gesundheit</option>
-          <option value="lernen">Lernen</option>
-        </select>
-        <label for="todoPoints" class="sr-only">Story Points</label>
-        <select id="todoPoints">
-          <option value="1">1 pt</option>
-          <option value="2">2 pt</option>
-          <option value="3">3 pt</option>
-          <option value="5">5 pt</option>
-        </select>
-        <button class="btn btn-primary" id="todoAdd">Hinzufügen</button>
+    <!-- Weather Widget -->
+    <div class="widget widget-weather" data-widget-id="weather">
+      <div class="widget-header">
+        <span class="widget-header-title">Wetter</span>
       </div>
-      <div class="todo-filters">
-        <button class="filter-btn active" data-filter="all">Alle</button>
-        <button class="filter-btn" data-filter="today">Heute</button>
-        <button class="filter-btn" data-filter="open">Offen</button>
-        <button class="filter-btn" data-filter="done">Erledigt</button>
+      <div class="widget-body">
+        <div class="weather-widget-inner">
+          <div class="weather-top">
+            <div class="weather-current">
+              <div class="weather-temp-big" id="weatherTempBig">--°</div>
+              <div class="weather-hi-lo">
+                <span id="weatherHi">H:--°</span>
+                <span id="weatherLo">L:--°</span>
+              </div>
+            </div>
+            <div class="weather-info">
+              <div class="weather-city" id="weatherCity">Laden...</div>
+              <div class="weather-desc" id="weatherDesc">--</div>
+            </div>
+          </div>
+          <div class="weather-forecast" id="weatherForecast"></div>
+        </div>
       </div>
-      <ul class="todo-list" id="todoList"></ul>
     </div>
 
-    <!-- Kalender -->
-    <div class="card" id="calendarCard">
-      <div class="card-title-row">
-        <div class="card-title">Kalender</div>
+    <!-- Quote Widget -->
+    <div class="widget" data-widget-id="quote">
+      <div class="widget-header">
+        <span class="widget-header-title">Täglicher Impuls</span>
+      </div>
+      <div class="widget-body widget-body-quote">
+        <div class="quote-text" id="quoteText">---</div>
+        <div class="quote-author" id="quoteAuthor">---</div>
+      </div>
+    </div>
+
+    <!-- Stats Widget -->
+    <div class="widget" data-widget-id="stats">
+      <div class="widget-header">
+        <span class="widget-header-title">Statistiken</span>
+      </div>
+      <div class="widget-body">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">Gesamt</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statDone">0</div>
+            <div class="stat-label">Erledigt</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statOpen">0</div>
+            <div class="stat-label">Offen</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statRate">0%</div>
+            <div class="stat-label">Rate</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- To-Do Widget -->
+    <div class="widget" data-widget-id="todo" id="todoCard">
+      <div class="widget-header">
+        <span class="widget-header-title">Aufgaben</span>
+      </div>
+      <div class="widget-body">
+        <div class="todo-input-row">
+          <label for="todoInput" class="sr-only">Aufgabe</label>
+          <input type="text" id="todoInput" placeholder="Neue Aufgabe..." />
+          <label for="todoDate" class="sr-only">Datum</label>
+          <input type="date" id="todoDate" />
+          <label for="todoCategory" class="sr-only">Kategorie</label>
+          <select id="todoCategory">
+            <option value="arbeit">Arbeit</option>
+            <option value="persoenlich">Persönlich</option>
+            <option value="gesundheit">Gesundheit</option>
+            <option value="lernen">Lernen</option>
+          </select>
+          <button class="btn btn-primary" id="todoAdd">Hinzufügen</button>
+        </div>
+        <div class="todo-filters">
+          <button class="filter-btn active" data-filter="all">Alle</button>
+          <button class="filter-btn" data-filter="today">Heute</button>
+          <button class="filter-btn" data-filter="open">Offen</button>
+          <button class="filter-btn" data-filter="done">Erledigt</button>
+        </div>
+        <ul class="todo-list" id="todoList"></ul>
+      </div>
+    </div>
+
+    <!-- Kalender Widget -->
+    <div class="widget" data-widget-id="calendar" id="calendarCard">
+      <div class="widget-header">
+        <span class="widget-header-title">Kalender</span>
         <div class="cal-header-actions">
           <button class="cal-import-btn" id="calSyncBtn" title="Kalender synchronisieren">SYNC</button>
           <button class="cal-expand-btn" id="calExpandBtn" title="Kalender vergrößern">
@@ -175,90 +268,70 @@
           </button>
         </div>
       </div>
-      <div class="calendar-nav">
-        <button class="calendar-nav-btn" id="calPrev">&lt;</button>
-        <span class="calendar-month-label" id="calMonthLabel">---</span>
-        <button class="calendar-nav-btn" id="calNext">&gt;</button>
+      <div class="widget-body">
+        <div class="calendar-nav">
+          <button class="calendar-nav-btn" id="calPrev">&lt;</button>
+          <span class="calendar-month-label" id="calMonthLabel">---</span>
+          <button class="calendar-nav-btn" id="calNext">&gt;</button>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
       </div>
-      <div class="calendar-grid" id="calendarGrid"></div>
     </div>
 
-    <!-- Kalender Sync Modal -->
-    <div class="modal-overlay" id="calSyncOverlay">
-      <div class="modal cal-sync-modal">
-        <div class="modal-header">
-          <div>
-            <div class="modal-title">Kalender Synchronisation</div>
-            <div class="modal-subtitle">Apple / Google Kalender verbinden</div>
-          </div>
-          <button class="modal-close" id="calSyncClose">x</button>
+    <!-- Pomodoro Timer Widget -->
+    <div class="widget" data-widget-id="pomodoro">
+      <div class="widget-header">
+        <span class="widget-header-title">Pomodoro</span>
+        <div class="pomo-mode-indicator" id="pomoModeIndicator">FOCUS</div>
+      </div>
+      <div class="widget-body widget-body-pomodoro">
+        <div class="pomo-display">
+          <canvas class="pomo-ring" id="pomoRing"></canvas>
+          <div class="pomo-time" id="pomoTime">25:00</div>
+          <div class="pomo-label" id="pomoLabel">Bereit</div>
         </div>
-        <div class="modal-body">
-
-          <!-- URL Abo -->
-          <div class="sync-section">
-            <div class="sync-section-title">Kalender-URL Abonnement</div>
-            <div class="sync-section-desc">
-              Füge eine öffentliche .ics-URL ein. Die Termine werden automatisch alle 15 Minuten synchronisiert.
-            </div>
-            <div class="sync-url-row">
-              <label for="syncUrlInput" class="sr-only">Kalender-URL</label>
-              <input type="text" class="sync-url-input" id="syncUrlInput" placeholder="https://calendar.google.com/...basic.ics" />
-              <button class="btn btn-primary" id="syncUrlSave">Verbinden</button>
-            </div>
-            <div class="sync-url-status" id="syncUrlStatus"></div>
-            <div class="sync-help">
-              <div class="sync-help-title">Wo finde ich die URL?</div>
-              <div class="sync-help-item">
-                <strong>Apple iCloud:</strong> icloud.com/calendar → Kalender teilen → Öffentlicher Kalender → Link kopieren
-              </div>
-              <div class="sync-help-item">
-                <strong>Google Calendar:</strong> Einstellungen → Kalender → Integration → Geheime iCal-Adresse kopieren
-              </div>
-              <div class="sync-help-item">
-                <strong>Outlook:</strong> Einstellungen → Kalender veröffentlichen → ICS-Link kopieren
-              </div>
-            </div>
+        <div class="pomo-controls">
+          <button class="pomo-btn" id="pomoStart" title="Start">▶</button>
+          <button class="pomo-btn" id="pomoPause" title="Pause">❚❚</button>
+          <button class="pomo-btn" id="pomoReset" title="Reset">■</button>
+        </div>
+        <div class="pomo-stats">
+          <div class="pomo-stat">
+            <span class="pomo-stat-value" id="pomoSessions">0</span>
+            <span class="pomo-stat-label">Sessions</span>
           </div>
-
-          <!-- Datei Import -->
-          <div class="sync-section">
-            <div class="sync-section-title">Datei importieren</div>
-            <div class="sync-section-desc">Exportiere deinen Kalender als .ics-Datei und lade sie hier hoch.</div>
-            <div class="sync-drop-zone" id="syncDropZone">
-              <div class="sync-drop-label">.ics-Datei hierher ziehen oder klicken</div>
-              <input type="file" id="calIcsFile" accept=".ics" class="sr-only" />
-            </div>
+          <div class="pomo-stat">
+            <span class="pomo-stat-value" id="pomoTotalMin">0</span>
+            <span class="pomo-stat-label">Min. Fokus</span>
           </div>
-
-          <!-- Importierte Events -->
-          <div class="sync-section sync-hidden" id="syncEventsSection">
-            <div class="sync-section-title">Synchronisierte Termine</div>
-            <div class="sync-events-count" id="syncEventsCount"></div>
-            <button class="btn sync-clear-btn" id="syncClearBtn">Sync-Termine löschen</button>
-          </div>
-
+          <div class="pomo-dots" id="pomoDots"></div>
         </div>
       </div>
     </div>
 
-    <!-- Charts -->
-    <div class="charts-row">
-      <div class="card">
-        <div class="card-title-row">
-          <div class="card-title">Fortschritt</div>
-          <div class="chart-range-btns">
-            <button class="chart-range-btn active" data-range="week">Woche</button>
-            <button class="chart-range-btn" data-range="month">Monat</button>
-            <button class="chart-range-btn" data-range="year">Jahr</button>
-          </div>
+    <!-- Fortschritt Chart Widget -->
+    <div class="widget" data-widget-id="progress">
+      <div class="widget-header">
+        <span class="widget-header-title">Fortschritt</span>
+        <div class="chart-range-btns">
+          <button class="chart-range-btn active" data-range="week">Woche</button>
+          <button class="chart-range-btn" data-range="month">Monat</button>
+          <button class="chart-range-btn" data-range="year">Jahr</button>
         </div>
+      </div>
+      <div class="widget-body">
         <div class="chart-container">
           <canvas id="lineChart"></canvas>
         </div>
       </div>
-      <div class="card">
-        <div class="card-title">Kategorien</div>
+    </div>
+
+    <!-- Kategorien Chart Widget -->
+    <div class="widget" data-widget-id="categories">
+      <div class="widget-header">
+        <span class="widget-header-title">Kategorien</span>
+      </div>
+      <div class="widget-body">
         <div class="chart-container">
           <canvas id="donutChart"></canvas>
         </div>

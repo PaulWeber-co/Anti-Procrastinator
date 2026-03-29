@@ -1,20 +1,23 @@
 # Anti Procrastinator
 
-Minimalistischer Produktivitäts-Hub als Chrome Extension oder Webseite. Notion-inspiriertes Design mit MVC-Architektur.
+Minimalistischer Produktivitäts-Hub als Chrome Extension oder Webseite. Nothing Phone Dot-Matrix Design mit MVC-Architektur.
 
 ## Features
 
-- Echtzeituhr mit Datum (Europe/Berlin)
-- Wetter-Widget (Open-Meteo API, kein API-Key nötig)
-- To-Do Liste mit Kategorien, Kalender-Anbindung und Story Points
-- Interaktiver Monatskalender (erweiterbar, ICS-Import)
-- Fortschritts-Diagramme (Woche / Monat / Jahr + Kategorieverteilung)
+- **Echtzeituhr** mit Datum (Europe/Berlin) — umschaltbar zwischen Digital und Analog (Dot-Matrix Canvas)
+- **Wetter-Widget** mit 7-Tage-Vorhersage (Open-Meteo API, kein API-Key nötig) — Light & Dark Mode
+- **To-Do Liste** mit Kategorien, Kalender-Anbindung und Story Points
+- **Interaktiver Monatskalender** (erweiterbar, ICS-Import)
+- **Pomodoro-Timer** — 25/5 Fokus-Sessions mit Dot-Ring-Fortschritt, Session-Tracking und Benachrichtigungen
+- **Tägliches Motivations-Zitat** — rotierender Impuls für Produktivität
+- **Fortschritts-Diagramme** (Woche / Monat / Jahr + Kategorieverteilung) — Dot-Matrix Canvas Charts
 - **Planer** mit 3 Modi:
-  - **Schule** — Klassen 5–13, klassenspezifische Fächer, Notentypen (Schulaufgaben, Exen, Mündlich) mit korrekter Gewichtung
+  - **Schule** — Klassen 5–13, klassenspezifische Fächer, Notentypen mit korrekter Gewichtung
   - **Universität** — Frei konfigurierbare Semester, Module, ECTS, Noten
   - **Provadis** — Informatik B.Sc. mit allen Modulen vorausgefüllt
-- Dark/Light Mode (Nothing Dot Design)
+- **Dark/Light Mode** (Nothing Dot Design) — alle Widgets theme-aware
 - Persistente Datenspeicherung (localStorage / chrome.storage)
+- Festes Grid-Layout — keine beweglichen Elemente, alles an der richtigen Stelle
 
 ## Schnellstart
 
@@ -50,11 +53,12 @@ Oder einfach `index.html` im Browser öffnen.
 ## Architektur (MVC)
 
 ```
-index.html          HTML-Struktur
-css/style.css       Styling & Theming (Nothing Dot Design)
+index.html          HTML-Struktur (Widget-basiertes Layout)
+css/style.css       Styling & Theming (Nothing Design, abgerundete Ecken, Schatten)
 js/storage.js       Speicher-Abstraktionsschicht
 js/model.js         Datenlogik & Persistenz
 js/view.js          DOM-Rendering
+js/widgets.js       Draggable Widget-System & Layout-Persistenz
 js/controller.js    Event-Handling & Steuerung
 js/init.js          App-Start
 ```
@@ -69,6 +73,6 @@ js/init.js          App-Start
 ## Technologien
 
 - HTML / CSS / Vanilla JavaScript (kein Build-Tool)
-- Chart.js (lokal eingebunden)
+- Custom Dot-Matrix Canvas Charts (kein Chart.js)
 - Space Grotesk + Space Mono (Google Fonts)
 - Open-Meteo (Wetter-API, kein Key nötig)

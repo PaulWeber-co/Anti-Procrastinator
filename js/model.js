@@ -15,6 +15,26 @@ const Model = {
     syncTime: 'ht_sync_time',
     planerMode: 'ht_planer_mode',
     planerData: 'ht_planer_data',
+    widgetPositions: 'ht_widget_positions',
+    clockMode: 'ht_clock_mode',
+    pomoState: 'ht_pomo_state',
+    pomoStats: 'ht_pomo_stats',
+  },
+
+  // ── Widget-Positionen ──
+
+  getWidgetPositions() {
+    const raw = Storage.get(this.STORAGE_KEYS.widgetPositions);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) { return null; }
+  },
+
+  saveWidgetPositions(positions) {
+    if (positions === null) {
+      Storage.remove(this.STORAGE_KEYS.widgetPositions);
+    } else {
+      Storage.set(this.STORAGE_KEYS.widgetPositions, JSON.stringify(positions));
+    }
   },
 
   // ── To-Do Daten ──
@@ -27,14 +47,13 @@ const Model = {
     Storage.set(this.STORAGE_KEYS.todos, JSON.stringify(todos));
   },
 
-  addTodo(text, date, category, points) {
+  addTodo(text, date, category) {
     const todos = this.getTodos();
     const todo = {
       id: this._uid(),
       text,
       date: date || null,
       category,
-      points: parseInt(points) || 1,
       completed: false,
       createdAt: new Date().toISOString(),
     };
@@ -91,16 +110,13 @@ const Model = {
     const done = todos.filter(t => t.completed).length;
     const open = total - done;
     const rate = total > 0 ? Math.round((done / total) * 100) : 0;
-    const totalPoints = todos.reduce((sum, t) => sum + (t.points || 1), 0);
-    const earnedPoints = todos.filter(t => t.completed).reduce((sum, t) => sum + (t.points || 1), 0);
-    return { total, done, open, rate, totalPoints, earnedPoints };
+    return { total, done, open, rate };
   },
 
   getWeeklyData() {
     const todos = this.getTodos();
     const labels = [];
     const completionData = [];
-    const pointsData = [];
 
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -113,19 +129,15 @@ const Model = {
       const completed = dayTodos.filter(t => t.completed).length;
       const total = dayTodos.length;
       completionData.push(total > 0 ? Math.round((completed / total) * 100) : 0);
-
-      const dayPoints = dayTodos.filter(t => t.completed).reduce((sum, t) => sum + (t.points || 1), 0);
-      pointsData.push(dayPoints);
     }
 
-    return { labels, completionData, pointsData };
+    return { labels, completionData };
   },
 
   getMonthlyData() {
     const todos = this.getTodos();
     const labels = [];
     const completionData = [];
-    const pointsData = [];
     const now = new Date();
 
     for (let i = 29; i >= 0; i--) {
@@ -139,19 +151,15 @@ const Model = {
       const completed = dayTodos.filter(t => t.completed).length;
       const total = dayTodos.length;
       completionData.push(total > 0 ? Math.round((completed / total) * 100) : 0);
-
-      const dayPoints = dayTodos.filter(t => t.completed).reduce((sum, t) => sum + (t.points || 1), 0);
-      pointsData.push(dayPoints);
     }
 
-    return { labels, completionData, pointsData };
+    return { labels, completionData };
   },
 
   getYearlyData() {
     const todos = this.getTodos();
     const labels = [];
     const completionData = [];
-    const pointsData = [];
     const now = new Date();
     const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
@@ -170,12 +178,9 @@ const Model = {
       const completed = monthTodos.filter(t => t.completed).length;
       const total = monthTodos.length;
       completionData.push(total > 0 ? Math.round((completed / total) * 100) : 0);
-
-      const monthPoints = monthTodos.filter(t => t.completed).reduce((sum, t) => sum + (t.points || 1), 0);
-      pointsData.push(monthPoints);
     }
 
-    return { labels, completionData, pointsData };
+    return { labels, completionData };
   },
 
   getChartData(range) {
@@ -234,7 +239,7 @@ const Model = {
   importICSEvents(events) {
     let imported = 0;
     events.forEach(ev => {
-      this.addTodo(ev.text, ev.date, 'arbeit', 1);
+      this.addTodo(ev.text, ev.date, 'arbeit');
       imported++;
     });
     return imported;
@@ -329,6 +334,90 @@ const Model = {
     Storage.set(this.STORAGE_KEYS.theme, theme);
   },
 
+  // ── Clock Mode ──
+
+  getClockMode() {
+    return Storage.get(this.STORAGE_KEYS.clockMode) || 'digital';
+  },
+
+  setClockMode(mode) {
+    Storage.set(this.STORAGE_KEYS.clockMode, mode);
+  },
+
+  // ── Pomodoro ──
+
+  POMO_WORK: 25 * 60,
+  POMO_BREAK: 5 * 60,
+  POMO_LONG_BREAK: 15 * 60,
+
+  getPomoStats() {
+    var raw = Storage.get(this.STORAGE_KEYS.pomoStats);
+    if (!raw) return { sessions: 0, totalMinutes: 0, todayDate: this.todayStr() };
+    try {
+      var stats = JSON.parse(raw);
+      // Reset bei neuem Tag
+      if (stats.todayDate !== this.todayStr()) {
+        stats = { sessions: 0, totalMinutes: 0, todayDate: this.todayStr() };
+        this.savePomoStats(stats);
+      }
+      return stats;
+    } catch (e) { return { sessions: 0, totalMinutes: 0, todayDate: this.todayStr() }; }
+  },
+
+  savePomoStats(stats) {
+    Storage.set(this.STORAGE_KEYS.pomoStats, JSON.stringify(stats));
+  },
+
+  addPomoSession() {
+    var stats = this.getPomoStats();
+    stats.sessions++;
+    stats.totalMinutes += 25;
+    this.savePomoStats(stats);
+    return stats;
+  },
+
+  // ── Daily Quotes ──
+
+  DAILY_QUOTES: [
+    { text: 'Der beste Zeitpunkt anzufangen war gestern. Der zweitbeste ist jetzt.', author: 'Chinesisches Sprichwort' },
+    { text: 'Es ist nicht wenig Zeit, die wir haben, sondern viel Zeit, die wir nicht nutzen.', author: 'Seneca' },
+    { text: 'Disziplin ist die Brücke zwischen Zielen und Ergebnissen.', author: 'Jim Rohn' },
+    { text: 'Du musst nicht großartig sein, um anzufangen. Aber du musst anfangen, um großartig zu werden.', author: 'Zig Ziglar' },
+    { text: 'Fokussiere dich nicht auf das Ergebnis. Fokussiere dich auf den Prozess.', author: 'Nick Saban' },
+    { text: 'Produktivität bedeutet nicht, beschäftigt zu sein. Es bedeutet, Ergebnisse zu erzielen.', author: 'Unbekannt' },
+    { text: 'Der einzige Weg, großartige Arbeit zu leisten, ist zu lieben, was man tut.', author: 'Steve Jobs' },
+    { text: 'Kleine Schritte sind besser als große Pläne.', author: 'Unbekannt' },
+    { text: 'Perfektion ist der Feind des Fortschritts.', author: 'Winston Churchill' },
+    { text: 'Erfolg ist die Summe kleiner Anstrengungen, Tag für Tag wiederholt.', author: 'Robert Collier' },
+    { text: 'Mach heute das, wovor sich andere drücken. Dann hast du morgen, was andere nicht haben.', author: 'Unbekannt' },
+    { text: 'Der Unterschied zwischen Erfolg und Misserfolg ist oft einfach: Anfangen.', author: 'Unbekannt' },
+    { text: 'Was immer du tun kannst oder erträumst — fange damit an. Kühnheit birgt Genius, Macht und Zauber.', author: 'Goethe' },
+    { text: 'Handle, bevor du bereit bist.', author: 'Mel Robbins' },
+    { text: 'Zwischen Stimulus und Reaktion liegt ein Raum. In diesem Raum liegt unsere Freiheit.', author: 'Viktor Frankl' },
+    { text: 'Das Geheimnis des Vorwärtskommens ist der Anfang.', author: 'Mark Twain' },
+    { text: 'Nicht weil es schwer ist, wagen wir es nicht — weil wir es nicht wagen, ist es schwer.', author: 'Seneca' },
+    { text: 'Die Definition von Wahnsinn ist, immer wieder das Gleiche zu tun und andere Ergebnisse zu erwarten.', author: 'Albert Einstein' },
+    { text: 'Fortschritt, nicht Perfektion.', author: 'Unbekannt' },
+    { text: 'Jeder Experte war einmal ein Anfänger.', author: 'Helen Hayes' },
+    { text: 'Tu weniger. Dafür besser.', author: 'Greg McKeown' },
+    { text: 'Was du heute denkst, wirst du morgen sein.', author: 'Buddha' },
+    { text: 'Die schwierigste Übung ist die erste: Aufstehen.', author: 'Unbekannt' },
+    { text: 'Ablenkung ist die größte Steuer auf Produktivität.', author: 'Robin Sharma' },
+    { text: 'Wer den Hafen nicht kennt, für den weht kein Wind günstig.', author: 'Seneca' },
+    { text: 'Eine Stunde fokussierter Arbeit schlägt vier Stunden Multitasking.', author: 'Unbekannt' },
+    { text: 'Deine Gewohnheiten bestimmen deine Zukunft.', author: 'Jack Canfield' },
+    { text: 'Energie, nicht Zeit, ist die Währung der Leistung.', author: 'Jim Loehr' },
+    { text: 'Mach es jetzt. Manchmal wird aus Später Nie.', author: 'Unbekannt' },
+    { text: 'Motivation bringt dich in Gang. Gewohnheit bringt dich ans Ziel.', author: 'Jim Ryun' },
+    { text: 'Der Weg entsteht beim Gehen.', author: 'Antonio Machado' },
+  ],
+
+  getDailyQuote() {
+    var dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+    var idx = dayOfYear % this.DAILY_QUOTES.length;
+    return this.DAILY_QUOTES[idx];
+  },
+
   // ── Wetter (Cache) ──
 
   getCachedWeather() {
@@ -355,35 +444,17 @@ const Model = {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   },
 
-  // ── Planer (generisch: Schule / Uni / Provadis) ──
+  // ── Planer (generisch: Schule / Bachelor / Master / Provadis) ──
 
   PLANER_MODES: {
-    schule: { label: 'Schulplaner', periodLabel: 'Klasse', pointsLabel: 'Fächer bestanden', gradeMin: 1, gradeMax: 6, gradeStep: 1, hasEcts: false, bestNote: 1, isSchule: true },
-    uni: { label: 'Studienplan', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false },
+    schule: { label: 'Schulplaner', periodLabel: 'Klasse', pointsLabel: 'Fächer benotet', gradeMin: 1, gradeMax: 6, gradeStep: 1, hasEcts: false, bestNote: 1, isSchule: true },
+    bachelor: { label: 'Bachelor Studienplan', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false },
+    master: { label: 'Master Studienplan', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false },
     provadis: { label: 'Studienplan Provadis', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false },
   },
 
-  // ── Schul-Fächer nach Klassenstufe ──
-  // Fächer die in jeder Klasse vorkommen
-  SCHULE_FAECHER_CORE: [
-    'Deutsch', 'Mathematik', 'Englisch', 'Sport', 'Religion/Ethik',
-  ],
-
-  // Zusätzliche Fächer je Klassenstufe
-  SCHULE_FAECHER_BY_KLASSE: {
-    5:  ['Geschichte', 'Geographie', 'Biologie', 'Musik', 'Kunst', 'Natur und Technik'],
-    6:  ['Geschichte', 'Geographie', 'Biologie', 'Musik', 'Kunst', 'Natur und Technik', '2. Fremdsprache (Latein/Französisch)'],
-    7:  ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Musik', 'Kunst', '2. Fremdsprache (Latein/Französisch)', 'Informatik'],
-    8:  ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Chemie', 'Musik', 'Kunst', '2. Fremdsprache (Latein/Französisch)', 'Informatik'],
-    9:  ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Chemie', 'Sozialkunde', 'Musik', 'Kunst', '2. Fremdsprache (Latein/Französisch)', 'Informatik', 'Wirtschaft und Recht'],
-    10: ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Chemie', 'Sozialkunde', 'Musik', 'Kunst', '2. Fremdsprache (Latein/Französisch)', 'Informatik', 'Wirtschaft und Recht'],
-    11: ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Chemie', 'Sozialkunde', 'Musik', 'Kunst', 'Informatik', 'Wirtschaft und Recht', 'W-Seminar', 'P-Seminar'],
-    12: ['Geschichte', 'Geographie', 'Biologie', 'Physik', 'Chemie', 'Sozialkunde', 'Musik', 'Kunst', 'Informatik', 'Wirtschaft und Recht', 'W-Seminar', 'P-Seminar'],
-    13: ['Geschichte', 'Biologie', 'Physik', 'Chemie', 'Sozialkunde', 'W-Seminar', 'P-Seminar'],
-  },
-
   // ── Noten-Typen für Schule ──
-  // Schulaufgabe (groß, zählt doppelt), Ex (klein, zählt halb so viel), Mündlich
+  // Schulaufgabe (groß, zählt doppelt), Ex (klein), Mündlich
   // Gewichtung: Schulaufgabe : Ex : Mündlich = 2 : 1 : 1
   SCHULE_NOTE_TYPES: [
     { key: 'schulaufgabe', label: 'Schulaufgaben', shortLabel: 'SA', weight: 2 },
@@ -480,78 +551,31 @@ const Model = {
         };
       });
     } else if (mode === 'schule') {
-      // Standard: Klasse 5-10, Benutzer kann später Klassen hinzufügen/entfernen
-      data = [];
-      for (var k = 5; k <= 10; k++) {
-        var faecher = this._getSchulFaecherForKlasse(k);
-        data.push({
-          period: k,
-          modules: faecher.map(function(name, fi) {
-            return {
-              id: 'k' + k + '_m' + fi,
-              name: name,
-              points: 1,
-              pruefung: '',
-              prof: '',
-              // Schulnoten-Felder: Arrays für mehrere Noten pro Typ
-              noten: { schulaufgabe: [], ex: [], muendlich: [] }
-            };
-          })
-        });
-      }
+      // Schule: Startet leer — Schüler trägt eigene Klassen und Fächer ein
+      data = [{
+        period: 5,
+        modules: []
+      }];
     } else {
-      data = [];
-      for (var s = 1; s <= 6; s++) {
-        data.push({
-          period: s,
-          modules: [
-            { id: 'u' + s + '_m0', name: 'Modul 1', points: 5, pruefung: 'Klausur', prof: '' },
-            { id: 'u' + s + '_m1', name: 'Modul 2', points: 5, pruefung: 'Klausur', prof: '' },
-            { id: 'u' + s + '_m2', name: 'Modul 3', points: 5, pruefung: 'Klausur', prof: '' },
-          ]
-        });
-      }
+      // Bachelor / Master: Startet leer — User trägt eigene Semester und Module ein
+      data = [{
+        period: 1,
+        modules: []
+      }];
     }
     this.savePlanerData(data);
-  },
-
-  _getSchulFaecherForKlasse(klasse) {
-    var core = this.SCHULE_FAECHER_CORE.slice();
-    var extra = this.SCHULE_FAECHER_BY_KLASSE[klasse] || this.SCHULE_FAECHER_BY_KLASSE[10];
-    return core.concat(extra);
   },
 
   addPeriod() {
     var data = this.getPlanerData();
     var mode = this.getPlanerMode();
-    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.uni;
-    var nextNum = data.length > 0 ? data[data.length - 1].period + 1 : 1;
-    var prefix = mode === 'schule' ? 'k' : (mode === 'provadis' ? 'p' : 'u');
+    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.bachelor;
+    var nextNum = data.length > 0 ? data[data.length - 1].period + 1 : (config.isSchule ? 5 : 1);
 
-    if (config.isSchule) {
-      // Für Schule: Fächer der nächsten Klasse laden
-      var faecher = this._getSchulFaecherForKlasse(nextNum);
-      data.push({
-        period: nextNum,
-        modules: faecher.map(function(name, fi) {
-          return {
-            id: prefix + nextNum + '_m' + fi + '_' + Date.now(),
-            name: name,
-            points: 1,
-            pruefung: '',
-            prof: '',
-            noten: { schulaufgabe: [], ex: [], muendlich: [] }
-          };
-        })
-      });
-    } else {
-      data.push({
-        period: nextNum,
-        modules: [
-          { id: prefix + nextNum + '_m0', name: 'Neues Modul', points: 5, pruefung: 'Klausur', prof: '' }
-        ]
-      });
-    }
+    data.push({
+      period: nextNum,
+      modules: []
+    });
     this.savePlanerData(data);
     return data;
   },
@@ -632,7 +656,7 @@ const Model = {
 
   getPlanerStats() {
     var mode = this.getPlanerMode();
-    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.uni;
+    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.bachelor;
 
     // Schul-Modus hat eigene Berechnung
     if (config.isSchule) {
@@ -667,7 +691,7 @@ const Model = {
 
   isPeriodComplete(periodIdx) {
     var mode = this.getPlanerMode();
-    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.uni;
+    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.bachelor;
 
     if (config.isSchule) {
       return this.isSchulPeriodComplete(periodIdx);
@@ -685,7 +709,7 @@ const Model = {
 
   getPeriodStats(periodIdx) {
     var mode = this.getPlanerMode();
-    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.uni;
+    var config = this.PLANER_MODES[mode] || this.PLANER_MODES.bachelor;
 
     if (config.isSchule) {
       return this.getSchulPeriodStats(periodIdx);
@@ -839,7 +863,4 @@ const Model = {
     Storage.set(this.STORAGE_KEYS.customNames, JSON.stringify(names));
   },
 };
-
-
-
 

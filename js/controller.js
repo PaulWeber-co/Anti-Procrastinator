@@ -9,16 +9,25 @@ const Controller = {
   calendarExpanded: false,
   chartRange: 'week',
 
+  // Pomodoro state
+  pomoRunning: false,
+  pomoMode: 'work', // 'work', 'break', 'longBreak'
+  pomoRemaining: 25 * 60,
+  pomoInterval: null,
+
   // ── Initialisierung ──
 
   init() {
     this._initTheme();
     this._initClock();
+    this._initClockToggle();
     this._initWeather();
     this._initStudienplan();
     this._initCalendarExpand();
     this._initChartRange();
     this._initICSImport();
+    this._initPomodoro();
+    this._initQuote();
     this._bindTodoEvents();
     this._bindFilterEvents();
     this._bindCalendarNav();
@@ -61,19 +70,148 @@ const Controller = {
       // Charts müssen nach Theme-Wechsel neu gerendert werden
       View.renderLineChart(Model.getChartData(this.chartRange));
       View.renderDonutChart(Model.getCategoryData());
+      View.renderAnalogClock();
+      this._renderPomoState();
     });
   },
 
   // ── Uhr ──
 
   _initClock() {
+    var self = this;
+    var clockMode = Model.getClockMode();
+    View.setClockMode(clockMode);
+
     View.updateClock();
-    setInterval(() => View.updateClock(), 1000);
+    setInterval(function() {
+      View.updateClock();
+      if (Model.getClockMode() === 'analog') {
+        View.renderAnalogClock();
+      }
+    }, 1000);
   },
 
-  // ── Lofi Player ──
+  _initClockToggle() {
+    var self = this;
+    View.el('clockToggle').addEventListener('click', function() {
+      var current = Model.getClockMode();
+      var next = current === 'digital' ? 'analog' : 'digital';
+      Model.setClockMode(next);
+      View.setClockMode(next);
+    });
+  },
 
+  // ── Pomodoro Timer ──
 
+  _initPomodoro() {
+    var self = this;
+    var stats = Model.getPomoStats();
+
+    this.pomoMode = 'work';
+    this.pomoRemaining = Model.POMO_WORK;
+    this.pomoRunning = false;
+
+    this._renderPomoState();
+
+    View.el('pomoStart').addEventListener('click', function() {
+      if (!self.pomoRunning) {
+        self.pomoRunning = true;
+        self._startPomoTimer();
+        self._renderPomoState();
+      }
+    });
+
+    View.el('pomoPause').addEventListener('click', function() {
+      if (self.pomoRunning) {
+        self.pomoRunning = false;
+        clearInterval(self.pomoInterval);
+        self.pomoInterval = null;
+        self._renderPomoState();
+      }
+    });
+
+    View.el('pomoReset').addEventListener('click', function() {
+      self.pomoRunning = false;
+      clearInterval(self.pomoInterval);
+      self.pomoInterval = null;
+      self.pomoMode = 'work';
+      self.pomoRemaining = Model.POMO_WORK;
+      self._renderPomoState();
+    });
+  },
+
+  _startPomoTimer() {
+    var self = this;
+    if (this.pomoInterval) clearInterval(this.pomoInterval);
+
+    this.pomoInterval = setInterval(function() {
+      if (!self.pomoRunning) return;
+
+      self.pomoRemaining--;
+
+      if (self.pomoRemaining <= 0) {
+        clearInterval(self.pomoInterval);
+        self.pomoInterval = null;
+        self.pomoRunning = false;
+
+        if (self.pomoMode === 'work') {
+          // Session abgeschlossen
+          var stats = Model.addPomoSession();
+          // Nächster Modus: nach 4 Sessions → lange Pause
+          if (stats.sessions % 4 === 0) {
+            self.pomoMode = 'longBreak';
+            self.pomoRemaining = Model.POMO_LONG_BREAK;
+          } else {
+            self.pomoMode = 'break';
+            self.pomoRemaining = Model.POMO_BREAK;
+          }
+          self._pomoNotify('Fokus-Session abgeschlossen!');
+        } else {
+          // Pause vorbei → zurück zu Arbeit
+          self.pomoMode = 'work';
+          self.pomoRemaining = Model.POMO_WORK;
+          self._pomoNotify('Pause vorbei — weiter geht\'s!');
+        }
+
+        self._renderPomoState();
+        return;
+      }
+
+      self._renderPomoState();
+    }, 1000);
+  },
+
+  _renderPomoState() {
+    var stats = Model.getPomoStats();
+    View.renderPomodoro({
+      mode: this.pomoMode,
+      remaining: this.pomoRemaining,
+      running: this.pomoRunning,
+      sessions: stats.sessions,
+      totalMinutes: stats.totalMinutes,
+    });
+  },
+
+  _pomoNotify(msg) {
+    // Titel blinken lassen
+    var origTitle = document.title;
+    document.title = '🍅 ' + msg;
+    setTimeout(function() { document.title = origTitle; }, 5000);
+
+    // Notification API
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Anti Procrastinator', { body: msg });
+    } else if ('Notification' in window && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+  },
+
+  // ── Daily Quote ──
+
+  _initQuote() {
+    var quote = Model.getDailyQuote();
+    View.displayQuote(quote);
+  },
   // ── Wetter ──
 
   WMO_DESCRIPTIONS: {
@@ -104,7 +242,7 @@ const Controller = {
 
   _initWeather() {
     const cached = Model.getCachedWeather();
-    if (cached) {
+    if (cached && cached.dailyMax) {
       View.displayWeather(cached);
     } else {
       this._fetchWeather();
@@ -118,6 +256,8 @@ const Controller = {
         + '?latitude=' + coords.lat
         + '&longitude=' + coords.lon
         + '&current=temperature_2m,weather_code'
+        + '&daily=temperature_2m_max,temperature_2m_min,weather_code'
+        + '&forecast_days=7'
         + '&timezone=Europe%2FBerlin';
 
       const res = await fetch(url);
@@ -132,6 +272,10 @@ const Controller = {
         temp: temp,
         desc: desc,
         city: coords.city,
+        dailyMax: data.daily.temperature_2m_max.map(function(t) { return Math.round(t); }),
+        dailyMin: data.daily.temperature_2m_min.map(function(t) { return Math.round(t); }),
+        dailyCodes: data.daily.weather_code,
+        dailyDates: data.daily.time,
       };
 
       Model.cacheWeather(weather);
@@ -261,11 +405,11 @@ const Controller = {
     var self = this;
     View.el('calExpandBtn').addEventListener('click', function() {
       self.calendarExpanded = !self.calendarExpanded;
-      var mainEl = document.querySelector('.main');
+      var calWidget = document.getElementById('calendarCard');
       if (self.calendarExpanded) {
-        mainEl.classList.add('calendar-expanded');
+        calWidget.classList.add('widget-expanded');
       } else {
-        mainEl.classList.remove('calendar-expanded');
+        calWidget.classList.remove('widget-expanded');
       }
       self._renderCalendar();
     });
@@ -498,6 +642,8 @@ const Controller = {
 
   // ── Planer ──
 
+  activeTab: 0,
+
   _initStudienplan() {
     var self = this;
 
@@ -520,6 +666,7 @@ const Controller = {
       btn.addEventListener('click', function() {
         var mode = btn.dataset.mode;
         Model.setPlanerMode(mode);
+        self.activeTab = 0;
         self._renderPlaner();
       });
     });
@@ -531,13 +678,15 @@ const Controller = {
         View.el('studienplanBody').innerHTML = '';
         View.el('planerTitle').textContent = 'Planer';
         View.el('studienplanSummary').textContent = '';
+        self.activeTab = 0;
         View.showPlanerModeSelect();
       });
     });
 
     // Zeitraum hinzufügen
     View.el('planerAddPeriod').addEventListener('click', function() {
-      Model.addPeriod();
+      var data = Model.addPeriod();
+      self.activeTab = data.length - 1;
       self._renderPlaner();
     });
   },
@@ -557,188 +706,130 @@ const Controller = {
     var mode = Model.getPlanerMode();
     if (!mode) { View.showPlanerModeSelect(); return; }
 
-    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.uni;
+    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.bachelor;
     var data = Model.getPlanerData();
     var grades = Model.getGrades();
 
+    // Clamp active tab
+    if (self.activeTab >= data.length) self.activeTab = Math.max(0, data.length - 1);
+
     View.showPlanerContent(mode);
-    View.renderPlaner(data, grades, mode);
+    View.renderPlanerTabs(data, self.activeTab, mode);
+    View.renderPlaner(data, grades, mode, self.activeTab);
     View.renderPlanerStats(Model.getPlanerStats(), mode);
 
-    // Accordion
-    document.querySelectorAll('.sp-semester-header').forEach(function(header) {
-      header.addEventListener('click', function(e) {
-        if (e.target.closest('.sp-period-delete')) return;
-        var content = header.nextElementSibling;
-        var chevron = header.querySelector('.sp-chevron');
-        if (content.classList.contains('sp-content-open')) {
-          content.classList.remove('sp-content-open');
-          chevron.classList.remove('sp-chevron-open');
-        } else {
-          content.classList.add('sp-content-open');
-          chevron.classList.add('sp-chevron-open');
-        }
+    // ── Tab clicks ──
+    document.querySelectorAll('.sp-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        self.activeTab = parseInt(tab.dataset.tabIdx);
+        self._renderPlaner();
+      });
+    });
+
+    // ── Common events ──
+
+    // Edit name/prof fields
+    document.querySelectorAll('.sp-card-name, .sp-card-sub').forEach(function(input) {
+      input.addEventListener('change', function() {
+        Model.updateModule(parseInt(input.dataset.period), parseInt(input.dataset.mod), input.dataset.field, input.value);
+      });
+    });
+
+    // Delete module
+    document.querySelectorAll('.sp-card-del').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        Model.deleteModule(parseInt(btn.dataset.period), parseInt(btn.dataset.mod));
+        self._renderPlaner();
+      });
+    });
+
+    // Delete period
+    document.querySelectorAll('.sp-period-del-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self._showConfirm(config.periodLabel + ' löschen?', function() {
+          Model.deletePeriod(parseInt(btn.dataset.periodDel));
+          self._renderPlaner();
+        });
+      });
+    });
+
+    // Add module
+    document.querySelectorAll('.sp-add-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        Model.addModule(parseInt(btn.dataset.addMod));
+        self._renderPlaner();
       });
     });
 
     if (config.isSchule) {
-      // ── SCHUL-MODUS Events ──
-
-      // Fach Name & Lehrer inputs
-      document.querySelectorAll('.sp-fach-name-input, .sp-fach-lehrer-input').forEach(function(input) {
-        input.addEventListener('change', function() {
-          var pi = parseInt(input.dataset.period);
-          var mi = parseInt(input.dataset.mod);
-          var field = input.dataset.field;
-          Model.updateModule(pi, mi, field, input.value);
+      // ── SCHUL: Quick-add grade buttons ──
+      document.querySelectorAll('.sp-qa-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var wrap = btn.closest('.sp-quick-add');
+          var pi = parseInt(wrap.dataset.period);
+          var mi = parseInt(wrap.dataset.mod);
+          var type = wrap.dataset.type;
+          var grade = parseInt(btn.dataset.grade);
+          Model.addSchulNote(pi, mi, type, grade);
+          self._renderPlaner();
         });
       });
 
-      // Noten-Chips klicken zum Löschen
-      document.querySelectorAll('.sp-note-chip').forEach(function(chip) {
-        chip.addEventListener('click', function() {
-          var pi = parseInt(chip.dataset.period);
-          var mi = parseInt(chip.dataset.mod);
-          var type = chip.dataset.type;
-          var ni = parseInt(chip.dataset.noteIdx);
-          self._showConfirm('Note ' + chip.textContent + ' löschen?', function() {
-            Model.removeSchulNote(pi, mi, type, ni);
-            self._refreshPlaner();
-          });
-        });
-      });
-
-      // Note hinzufügen
-      document.querySelectorAll('.sp-note-add-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          var pi = parseInt(btn.dataset.period);
-          var mi = parseInt(btn.dataset.mod);
-          var type = btn.dataset.type;
-
-          // Erstelle ein Mini-Input inline
-          var existingInput = btn.parentElement.querySelector('.sp-note-inline-input');
-          if (existingInput) {
-            existingInput.focus();
-            return;
-          }
-
-          var inp = document.createElement('input');
-          inp.type = 'number';
-          inp.min = '1';
-          inp.max = '6';
-          inp.step = '1';
-          inp.className = 'sp-note-inline-input';
-          inp.placeholder = '1-6';
-          btn.parentElement.insertBefore(inp, btn);
-          inp.focus();
-
-          function saveNote() {
-            var val = parseInt(inp.value);
-            if (val >= 1 && val <= 6) {
-              Model.addSchulNote(pi, mi, type, val);
-              self._refreshPlaner();
-            } else {
-              inp.remove();
-            }
-          }
-
-          inp.addEventListener('keydown', function(ev) {
-            if (ev.key === 'Enter') saveNote();
-            if (ev.key === 'Escape') inp.remove();
-          });
-
-          inp.addEventListener('blur', function() {
-            saveNote();
-          });
+      // Noten-Pills klicken zum Löschen
+      document.querySelectorAll('.sp-pill').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          var pi = parseInt(pill.dataset.period);
+          var mi = parseInt(pill.dataset.mod);
+          var type = pill.dataset.type;
+          var ni = parseInt(pill.dataset.noteIdx);
+          Model.removeSchulNote(pi, mi, type, ni);
+          self._renderPlaner();
         });
       });
 
     } else {
-      // ── UNI-MODUS Events (bestehend) ──
+      // ── UNI: Grade edit, status cycle, ECTS/Pruefung edits ──
 
-      // Grade inputs
-      document.querySelectorAll('.sp-grade-input').forEach(function(input) {
+      // Status cycle button
+      document.querySelectorAll('.sp-status-cycle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var moduleId = btn.dataset.module;
+          var current = btn.dataset.current;
+          var next = current === 'offen' ? 'bestanden' : (current === 'bestanden' ? 'nicht-bestanden' : 'offen');
+          var gradeInput = document.querySelector('.sp-grade-edit[data-module="' + moduleId + '"]');
+          var grade = gradeInput ? gradeInput.value : '';
+          Model.saveGrade(moduleId, grade, next);
+          self._renderPlaner();
+        });
+      });
+
+      // Grade input
+      document.querySelectorAll('.sp-grade-edit').forEach(function(input) {
         input.addEventListener('change', function() {
           var moduleId = input.dataset.module;
-          var selectEl = document.querySelector('.sp-status-select[data-module="' + moduleId + '"]');
-          var status = selectEl ? selectEl.value : 'offen';
+          var statusBtn = document.querySelector('.sp-status-cycle[data-module="' + moduleId + '"]');
+          var status = statusBtn ? statusBtn.dataset.current : 'offen';
           Model.saveGrade(moduleId, input.value, status);
-          self._refreshPlaner();
+          self._renderPlaner();
         });
       });
 
-      // Status selects
-      document.querySelectorAll('.sp-status-select').forEach(function(select) {
-        select.addEventListener('change', function() {
-          var moduleId = select.dataset.module;
-          var gradeInput = document.querySelector('.sp-grade-input[data-module="' + moduleId + '"]');
-          var grade = gradeInput ? gradeInput.value : '';
-          Model.saveGrade(moduleId, grade, select.value);
-          self._refreshPlaner();
-        });
-      });
-
-      // Inline module field edits (name, prof, pruefung, points)
-      document.querySelectorAll('.sp-name-input, .sp-prof-input, .sp-pruef-input, .sp-ects-input').forEach(function(input) {
+      // ECTS, Pruefung edits
+      document.querySelectorAll('.sp-ects-edit, .sp-pruef-edit').forEach(function(input) {
         input.addEventListener('change', function() {
           var pi = parseInt(input.dataset.period);
           var mi = parseInt(input.dataset.mod);
           var field = input.dataset.field;
           var val = field === 'points' ? parseInt(input.value) || 5 : input.value;
           Model.updateModule(pi, mi, field, val);
-          self._refreshPlaner();
+          self._renderPlaner();
         });
       });
     }
-
-    // Delete module (both modes)
-    document.querySelectorAll('.sp-mod-delete').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        Model.deleteModule(parseInt(btn.dataset.period), parseInt(btn.dataset.mod));
-        self._refreshPlaner();
-      });
-    });
-
-    // Delete period
-    document.querySelectorAll('.sp-period-delete').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var periodIdx = parseInt(btn.dataset.periodDel);
-        self._showConfirm(config.periodLabel + ' löschen?', function() {
-          Model.deletePeriod(periodIdx);
-          self._refreshPlaner();
-        });
-      });
-    });
-
-    // Add module
-    document.querySelectorAll('.sp-add-module-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        Model.addModule(parseInt(btn.dataset.addMod));
-        self._refreshPlaner();
-      });
-    });
   },
 
   _refreshPlaner() {
-    var openSemesters = [];
-    document.querySelectorAll('.sp-semester-content.sp-content-open').forEach(function(el) {
-      var parent = el.closest('.sp-semester');
-      if (parent) openSemesters.push(parent.dataset.semester);
-    });
-
     this._renderPlaner();
-
-    openSemesters.forEach(function(idx) {
-      var content = document.querySelector('.sp-semester[data-semester="' + idx + '"] .sp-semester-content');
-      var chevron = document.querySelector('.sp-semester[data-semester="' + idx + '"] .sp-chevron');
-      if (content && !content.classList.contains('sp-content-open')) {
-        content.classList.add('sp-content-open');
-        if (chevron) chevron.classList.add('sp-chevron-open');
-      }
-    });
   },
 
   // ── Confirm Modal (confirm() funktioniert nicht in Extensions) ──
