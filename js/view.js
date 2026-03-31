@@ -682,7 +682,7 @@ const View = {
    * Renders the tab bar for periods/semesters
    */
   renderPlanerTabs(data, activeIdx, mode) {
-    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.uni;
+    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.bachelor;
     var tabsEl = this.el('spTabs');
     var html = '';
     data.forEach(function(period, idx) {
@@ -707,7 +707,7 @@ const View = {
    */
   renderPlaner(data, grades, mode, activeIdx) {
     var body = this.el('studienplanBody');
-    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.uni;
+    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.bachelor;
     var self = this;
     var isSchule = config.isSchule || false;
 
@@ -837,7 +837,7 @@ const View = {
   },
 
   renderPlanerStats(stats, mode) {
-    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.uni;
+    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.bachelor;
     var avgEl = this.el('spAverage');
     var ectsEl = this.el('spEctsComplete');
     var summaryEl = this.el('studienplanSummary');
@@ -862,7 +862,7 @@ const View = {
   },
 
   showPlanerContent(mode) {
-    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.uni;
+    var config = Model.PLANER_MODES[mode] || Model.PLANER_MODES.bachelor;
     this.el('planerTitle').textContent = config.label;
     this.el('planerModeSelect').classList.add('sync-hidden');
     this.el('studienplanBody').classList.remove('sync-hidden');

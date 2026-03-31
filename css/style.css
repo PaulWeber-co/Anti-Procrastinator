@@ -106,6 +106,10 @@
   --weather-border: rgba(255,255,255,0.08);
 }
 
+/* ═══════════════════ UTILITY ═══════════════════ */
+.sync-hidden { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
 /* ═══════════════════ RESET & BASE ═══════════════════ */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -1169,6 +1173,12 @@ body {
   flex-direction: column;
   box-shadow: var(--shadow-lg);
   animation: modalIn 0.25s ease;
+  overflow: hidden;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .modal-header {
@@ -1253,7 +1263,7 @@ body {
 
 .planer-mode-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 14px;
   max-width: 640px;
   margin: 0 auto;

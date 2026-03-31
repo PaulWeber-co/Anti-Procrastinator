@@ -6,7 +6,7 @@ Minimalistischer Produktivitäts-Hub als Chrome Extension oder Webseite. Nothing
 
 - **Echtzeituhr** mit Datum (Europe/Berlin) — umschaltbar zwischen Digital und Analog (Dot-Matrix Canvas)
 - **Wetter-Widget** mit 7-Tage-Vorhersage (Open-Meteo API, kein API-Key nötig) — Light & Dark Mode
-- **To-Do Liste** mit Kategorien, Kalender-Anbindung und Story Points
+- **To-Do Liste** mit Kategorien und Kalender-Anbindung
 - **Interaktiver Monatskalender** (erweiterbar, ICS-Import)
 - **Pomodoro-Timer** — 25/5 Fokus-Sessions mit Dot-Ring-Fortschritt, Session-Tracking und Benachrichtigungen
 - **Tägliches Motivations-Zitat** — rotierender Impuls für Produktivität

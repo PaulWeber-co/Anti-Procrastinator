@@ -447,10 +447,10 @@ const Model = {
   // ── Planer (generisch: Schule / Bachelor / Master / Provadis) ──
 
   PLANER_MODES: {
-    schule: { label: 'Schulplaner', periodLabel: 'Klasse', pointsLabel: 'Fächer benotet', gradeMin: 1, gradeMax: 6, gradeStep: 1, hasEcts: false, bestNote: 1, isSchule: true },
-    bachelor: { label: 'Bachelor Studienplan', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false },
-    master: { label: 'Master Studienplan', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false },
-    provadis: { label: 'Studienplan Provadis', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false },
+    schule: { label: 'Schulplaner', periodLabel: 'Klasse', pointsLabel: 'Fächer benotet', gradeMin: 1, gradeMax: 6, gradeStep: 1, hasEcts: false, bestNote: 1, isSchule: true, targetPoints: 0, typicalPeriods: 9 },
+    bachelor: { label: 'Bachelor Studienplan', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false, targetEcts: 180, typicalPeriods: 6 },
+    master: { label: 'Master Studienplan', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false, targetEcts: 120, typicalPeriods: 4 },
+    provadis: { label: 'Studienplan Provadis', periodLabel: 'Semester', pointsLabel: 'ECTS abgeschlossen', gradeMin: 1.0, gradeMax: 5.0, gradeStep: 0.1, hasEcts: true, bestNote: 1.0, isSchule: false, targetEcts: 180, typicalPeriods: 6 },
   },
 
   // ── Noten-Typen für Schule ──
@@ -551,13 +551,19 @@ const Model = {
         };
       });
     } else if (mode === 'schule') {
-      // Schule: Startet leer — Schüler trägt eigene Klassen und Fächer ein
+      // Schule: Startet mit Klasse 5 — Schüler trägt eigene Fächer ein
       data = [{
         period: 5,
         modules: []
       }];
+    } else if (mode === 'master') {
+      // Master: Startet mit Semester 1 — User trägt eigene Module ein (4 Semester, 120 ECTS typisch)
+      data = [{
+        period: 1,
+        modules: []
+      }];
     } else {
-      // Bachelor / Master: Startet leer — User trägt eigene Semester und Module ein
+      // Bachelor: Startet mit Semester 1 — User trägt eigene Module ein (6 Semester, 180 ECTS typisch)
       data = [{
         period: 1,
         modules: []
@@ -587,16 +593,27 @@ const Model = {
     var mCount = data[periodIdx].modules.length;
     var prefix = mode === 'schule' ? 'k' : (mode === 'provadis' ? 'p' : 'u');
     var id = prefix + periodIdx + '_m' + mCount + '_' + Date.now();
-    var newMod = {
-      id: id,
-      name: mode === 'schule' ? 'Neues Fach' : 'Neues Modul',
-      points: mode === 'schule' ? 1 : 5,
-      pruefung: mode === 'schule' ? '' : 'Klausur',
-      prof: ''
-    };
+
+    var newMod;
     if (mode === 'schule') {
-      newMod.noten = { schulaufgabe: [], ex: [], muendlich: [] };
+      // Schule: Fach mit Notentypen (SA, Ex, Mündlich), keine ECTS
+      newMod = {
+        id: id,
+        name: 'Neues Fach',
+        prof: '',
+        noten: { schulaufgabe: [], ex: [], muendlich: [] }
+      };
+    } else {
+      // Uni (Bachelor/Master/Provadis): Modul mit ECTS, Prüfungsform, Dozent
+      newMod = {
+        id: id,
+        name: 'Neues Modul',
+        points: 5,
+        pruefung: 'Klausur',
+        prof: ''
+      };
     }
+
     data[periodIdx].modules.push(newMod);
     this.savePlanerData(data);
     return data;
@@ -863,4 +880,7 @@ const Model = {
     Storage.set(this.STORAGE_KEYS.customNames, JSON.stringify(names));
   },
 };
+
+
+
 

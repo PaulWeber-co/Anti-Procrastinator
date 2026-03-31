@@ -362,9 +362,8 @@ const Controller = {
 
     const date = View.el('todoDate').value || null;
     const category = View.el('todoCategory').value;
-    const points = View.el('todoPoints').value;
 
-    Model.addTodo(text, date, category, points);
+    Model.addTodo(text, date, category);
     input.value = '';
     this.renderAll();
   },
@@ -694,7 +693,14 @@ const Controller = {
   _openPlaner() {
     var mode = Model.getPlanerMode();
     if (mode) {
-      this._renderPlaner();
+      try {
+        this._renderPlaner();
+      } catch (e) {
+        console.error('Planer Render-Fehler:', e);
+        // Fallback: Modus-Auswahl anzeigen
+        Model.resetPlaner();
+        View.showPlanerModeSelect();
+      }
     } else {
       View.showPlanerModeSelect();
     }
