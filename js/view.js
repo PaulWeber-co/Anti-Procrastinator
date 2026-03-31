@@ -854,6 +854,29 @@ const View = {
     if (progressEl) { progressEl.style.width = pct + '%'; }
   },
 
+  showSchulKlassenWahl() {
+    this.el('planerModeSelect').classList.add('sync-hidden');
+    this.el('studienplanBody').classList.remove('sync-hidden');
+    var tabsWrap = this.el('spTabsWrap');
+    if (tabsWrap) tabsWrap.classList.add('sync-hidden');
+    this.el('planerTitle').textContent = 'Schulplaner';
+    this.el('studienplanSummary').textContent = '';
+
+    var html = '<div class="schul-klassen-wahl">';
+    html += '<div class="planer-mode-title">In welcher Klasse bist du?</div>';
+    html += '<div class="schul-klassen-grid">';
+    for (var k = 5; k <= 13; k++) {
+      html += '<button class="schul-klasse-btn" data-klasse="' + k + '">';
+      html += '<span class="schul-klasse-num">' + k + '</span>';
+      html += '<span class="schul-klasse-label">Klasse</span>';
+      html += '</button>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    this.el('studienplanBody').innerHTML = html;
+  },
+
   showPlanerModeSelect() {
     this.el('planerModeSelect').classList.remove('sync-hidden');
     this.el('studienplanBody').classList.add('sync-hidden');

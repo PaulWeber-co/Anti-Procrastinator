@@ -1329,6 +1329,58 @@ body {
   line-height: 1.5;
 }
 
+/* ── Schul-Klassenwahl ── */
+.schul-klassen-wahl {
+  padding: 40px 28px;
+  text-align: center;
+}
+
+.schul-klassen-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.schul-klasse-btn {
+  background: var(--bg-input);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px 16px 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.schul-klasse-btn:hover {
+  border-color: var(--text);
+  background: var(--bg-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.schul-klasse-num {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.schul-klasse-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
 /* ── Tabs + Stats Bar ── */
 .sp-tabs-wrap {
   border-bottom: 1px solid var(--border);
@@ -1879,6 +1931,7 @@ body {
 
 @media (max-width: 600px) {
   .planer-mode-grid { grid-template-columns: 1fr; }
+  .schul-klassen-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .sp-cards { grid-template-columns: 1fr; }
   .sp-tabs { padding: 0 12px; }
   .sp-stats-bar { padding: 8px 12px; flex-wrap: wrap; }

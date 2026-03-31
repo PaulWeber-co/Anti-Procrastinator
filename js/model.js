@@ -462,6 +462,18 @@ const Model = {
     { key: 'muendlich', label: 'Mündliche Noten', shortLabel: 'Mdl', weight: 1 },
   ],
 
+  SCHULE_DEFAULT_FAECHER: {
+    5:  ['Deutsch', 'Mathematik', 'Englisch', 'Natur und Technik', 'Geographie', 'Kunst', 'Musik', 'Sport', 'Religion/Ethik'],
+    6:  ['Deutsch', 'Mathematik', 'Englisch', 'Latein/Französisch', 'Natur und Technik', 'Geschichte', 'Geographie', 'Kunst', 'Musik', 'Sport', 'Religion/Ethik'],
+    7:  ['Deutsch', 'Mathematik', 'Englisch', 'Latein/Französisch', 'Natur und Technik', 'Geschichte', 'Geographie', 'Kunst', 'Musik', 'Sport', 'Religion/Ethik'],
+    8:  ['Deutsch', 'Mathematik', 'Englisch', 'Latein/Französisch', 'Physik', 'Chemie', 'Geschichte', 'Geographie', 'Kunst', 'Musik', 'Sport', 'Religion/Ethik', 'Informatik'],
+    9:  ['Deutsch', 'Mathematik', 'Englisch', 'Latein/Französisch', 'Physik', 'Chemie', 'Geschichte', 'Sozialkunde', 'Geographie', 'Kunst', 'Musik', 'Sport', 'Religion/Ethik', 'Informatik'],
+    10: ['Deutsch', 'Mathematik', 'Englisch', 'Latein/Französisch', 'Physik', 'Chemie', 'Geschichte', 'Sozialkunde', 'Geographie', 'Kunst', 'Musik', 'Sport', 'Religion/Ethik'],
+    11: ['Deutsch', 'Mathematik', 'Englisch', 'Geschichte', 'Sport', 'Religion/Ethik', 'Physik', 'Geographie', 'Wirtschaft und Recht'],
+    12: ['Deutsch', 'Mathematik', 'Englisch', 'Geschichte', 'Sport', 'Religion/Ethik', 'Physik', 'Geographie', 'Wirtschaft und Recht'],
+    13: ['Deutsch', 'Mathematik', 'Englisch', 'Geschichte', 'Sport'],
+  },
+
   PROVADIS_DATA: [
     { period: 1, modules: [
       { name: 'Mathematik 1', points: 5, pruefung: '90-min Klausur', prof: 'Prof. Dr. Volker Scheidemann' },
@@ -516,12 +528,12 @@ const Model = {
     return Storage.get(this.STORAGE_KEYS.planerMode) || null;
   },
 
-  setPlanerMode(mode) {
+  setPlanerMode(mode, startKlasse) {
     Storage.set(this.STORAGE_KEYS.planerMode, mode);
     // Immer neu initialisieren — nach resetPlaner() sind Daten leer
     var existing = this.getPlanerData();
     if (!existing || existing.length === 0) {
-      this._initPlanerData(mode);
+      this._initPlanerData(mode, startKlasse);
     }
   },
 
@@ -539,7 +551,7 @@ const Model = {
     Storage.set(this.STORAGE_KEYS.planerData, JSON.stringify(data));
   },
 
-  _initPlanerData(mode) {
+  _initPlanerData(mode, startKlasse) {
     var data;
     if (mode === 'provadis') {
       data = this.PROVADIS_DATA.map(function(p, pi) {
@@ -551,10 +563,13 @@ const Model = {
         };
       });
     } else if (mode === 'schule') {
-      // Schule: Startet mit Klasse 5 — Schüler trägt eigene Fächer ein
+      var klasse = startKlasse || 5;
+      var faecher = this.SCHULE_DEFAULT_FAECHER[klasse] || this.SCHULE_DEFAULT_FAECHER[5];
       data = [{
-        period: 5,
-        modules: []
+        period: klasse,
+        modules: faecher.map(function(name, mi) {
+          return { id: 'k0_m' + mi + '_' + Date.now(), name: name, prof: '', noten: { schulaufgabe: [], ex: [], muendlich: [] } };
+        })
       }];
     } else if (mode === 'master') {
       // Master: Startet mit Semester 1 — User trägt eigene Module ein (4 Semester, 120 ECTS typisch)
@@ -578,9 +593,18 @@ const Model = {
     var config = this.PLANER_MODES[mode] || this.PLANER_MODES.bachelor;
     var nextNum = data.length > 0 ? data[data.length - 1].period + 1 : (config.isSchule ? 5 : 1);
 
+    var modules = [];
+    if (config.isSchule && this.SCHULE_DEFAULT_FAECHER[nextNum]) {
+      var self = this;
+      var pi = data.length;
+      modules = this.SCHULE_DEFAULT_FAECHER[nextNum].map(function(name, mi) {
+        return { id: 'k' + pi + '_m' + mi + '_' + Date.now(), name: name, prof: '', noten: { schulaufgabe: [], ex: [], muendlich: [] } };
+      });
+    }
+
     data.push({
       period: nextNum,
-      modules: []
+      modules: modules
     });
     this.savePlanerData(data);
     return data;

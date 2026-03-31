@@ -664,9 +664,14 @@ const Controller = {
     document.querySelectorAll('.planer-mode-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var mode = btn.dataset.mode;
-        Model.setPlanerMode(mode);
-        self.activeTab = 0;
-        self._renderPlaner();
+        if (mode === 'schule') {
+          View.showSchulKlassenWahl();
+          self._bindSchulKlassenEvents();
+        } else {
+          Model.setPlanerMode(mode);
+          self.activeTab = 0;
+          self._renderPlaner();
+        }
       });
     });
 
@@ -687,6 +692,18 @@ const Controller = {
       var data = Model.addPeriod();
       self.activeTab = data.length - 1;
       self._renderPlaner();
+    });
+  },
+
+  _bindSchulKlassenEvents() {
+    var self = this;
+    document.querySelectorAll('.schul-klasse-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var klasse = parseInt(btn.dataset.klasse);
+        Model.setPlanerMode('schule', klasse);
+        self.activeTab = 0;
+        self._renderPlaner();
+      });
     });
   },
 
