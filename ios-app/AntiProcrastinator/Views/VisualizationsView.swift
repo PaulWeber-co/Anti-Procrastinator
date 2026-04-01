@@ -126,7 +126,7 @@ struct VisualizationsView: View {
                 // ── Daily Quote ──
                 let quote = Quotes.daily()
                 VStack(spacing: 10) {
-                    Text("„\(quote.text)"")
+                    Text("\"\(quote.text)\"")
                         .font(.system(size: 13))
                         .italic()
                         .foregroundColor(colors.text)

@@ -163,10 +163,13 @@ struct SummaryView: View {
                     } else {
                         ForEach(todayTodos.prefix(5)) { todo in
                             HStack(spacing: 8) {
-                                Circle()
-                                    .fill(todo.completed ? colors.text : Color.clear)
-                                    .stroke(todo.completed ? Color.clear : colors.textMuted, lineWidth: 1)
-                                    .frame(width: 10, height: 10)
+                                ZStack {
+                                    Circle()
+                                        .fill(todo.completed ? colors.text : Color.clear)
+                                    Circle()
+                                        .stroke(todo.completed ? Color.clear : colors.textMuted, lineWidth: 1)
+                                }
+                                .frame(width: 10, height: 10)
                                 Text(todo.text)
                                     .font(.system(size: 10))
                                     .foregroundColor(todo.completed ? colors.textMuted : colors.text)
@@ -272,8 +275,8 @@ struct MiniCalendarGrid: View {
         let month = calendar.dateComponents([.year, .month], from: today)
         let firstOfMonth = calendar.date(from: month)!
         let daysInMonth = calendar.range(of: .day, in: .month, for: today)!.count
-        var startOffset = calendar.component(.weekday, from: firstOfMonth) - 2
-        if startOffset < 0 { startOffset = 6 }
+        let rawOffset = calendar.component(.weekday, from: firstOfMonth) - 2
+        let startOffset = rawOffset < 0 ? 6 : rawOffset
 
         VStack(spacing: 2) {
             HStack(spacing: 0) {
@@ -320,4 +323,6 @@ struct MiniCalendarGrid: View {
         }
     }
 }
+
+
 
