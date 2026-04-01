@@ -147,6 +147,72 @@ struct PlanerStats {
     var gradedPoints: Int = 0
 }
 
+extension PlanerMode {
+    var periodRange: ClosedRange<Int> {
+        switch self {
+        case .schule: return 5...13
+        case .bachelor: return 1...6
+        case .master: return 1...4
+        case .provadis: return 1...6
+        }
+    }
+
+    func defaultModules(for period: Int) -> [PlanerModule] {
+        switch self {
+        case .schule:
+            let subjectsByClass: [Int: [String]] = [
+                5: ["Deutsch", "Mathematik", "Englisch", "Biologie", "Geschichte", "Sport"],
+                6: ["Deutsch", "Mathematik", "Englisch", "Geographie", "Biologie", "Sport"],
+                7: ["Deutsch", "Mathematik", "Englisch", "Franzosisch", "Physik", "Chemie"],
+                8: ["Deutsch", "Mathematik", "Englisch", "Physik", "Chemie", "Informatik"],
+                9: ["Deutsch", "Mathematik", "Englisch", "Wirtschaft", "Physik", "Informatik"],
+                10: ["Deutsch", "Mathematik", "Englisch", "Biologie", "Chemie", "Sozialkunde"],
+                11: ["Deutsch", "Mathematik", "Englisch", "Informatik", "Geschichte", "Sport"],
+                12: ["Deutsch", "Mathematik", "Englisch", "Informatik", "Wirtschaft", "Politik"],
+                13: ["Deutsch", "Mathematik", "Englisch", "Informatik", "Ethik", "Seminar"]
+            ]
+            let subjects = subjectsByClass[period] ?? subjectsByClass[10] ?? []
+            return subjects.map {
+                PlanerModule(name: $0, points: 0, noten: SchulNoten(), status: .offen)
+            }
+        case .bachelor:
+            let modulesBySemester: [Int: [String]] = [
+                1: ["Programmierung 1", "Mathematik 1", "Technische Informatik", "BWL"],
+                2: ["Programmierung 2", "Mathematik 2", "Datenbanken", "Rechnernetze"],
+                3: ["Algorithmen", "Software Engineering", "Statistik", "Web-Technologien"],
+                4: ["Betriebssysteme", "IT-Sicherheit", "Projektmanagement", "Wahlpflicht 1"],
+                5: ["Verteilte Systeme", "KI Grundlagen", "Wahlpflicht 2", "Praxisprojekt"],
+                6: ["Bachelorarbeit", "Kolloquium", "Unternehmenspraxis"]
+            ]
+            return (modulesBySemester[period] ?? []).map {
+                PlanerModule(name: $0, points: 5, status: .offen)
+            }
+        case .master:
+            let modulesBySemester: [Int: [String]] = [
+                1: ["Advanced Software Engineering", "Data Science", "Research Methods"],
+                2: ["Cloud Computing", "Machine Learning", "IT-Architekturen"],
+                3: ["Wahlpflicht Vertiefung", "Praxisprojekt", "Seminar"],
+                4: ["Masterarbeit", "Verteidigung"]
+            ]
+            return (modulesBySemester[period] ?? []).map {
+                PlanerModule(name: $0, points: 6, status: .offen)
+            }
+        case .provadis:
+            let provadisBySemester: [Int: [String]] = [
+                1: ["Programmierung", "Mathematik", "BWL", "Kommunikation"],
+                2: ["Objektorientierung", "Datenbanken", "Recht", "Englisch"],
+                3: ["Webentwicklung", "Statistik", "Projektarbeit", "Wirtschaftsinformatik"],
+                4: ["Software Engineering", "IT-Sicherheit", "Controlling", "Praxisphase"],
+                5: ["Systemintegration", "Cloud Grundlagen", "Wahlmodul", "Praxisprojekt"],
+                6: ["Bachelor Thesis", "Kolloquium", "Unternehmensprojekt"]
+            ]
+            return (provadisBySemester[period] ?? []).map {
+                PlanerModule(name: $0, points: 5, status: .offen)
+            }
+        }
+    }
+}
+
 // ══════════════════════════════════════════════════════════
 // Weather Model
 // ══════════════════════════════════════════════════════════
@@ -213,4 +279,5 @@ struct Quotes {
         return list[dayOfYear % list.count]
     }
 }
+
 

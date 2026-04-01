@@ -21,6 +21,7 @@
 		B70A000000000000000000AC /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B70A000000000000000000BC /* SummaryView.swift */; };
 		B70A000000000000000000AD /* TodoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B70A000000000000000000BD /* TodoView.swift */; };
 		B70A000000000000000000AE /* VisualizationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B70A000000000000000000BE /* VisualizationsView.swift */; };
+		B70A000000000000000000AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B70A000000000000000000BF /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		B70A000000000000000000BC /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
 		B70A000000000000000000BD /* TodoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoView.swift; sourceTree = "<group>"; };
 		B70A000000000000000000BE /* VisualizationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualizationsView.swift; sourceTree = "<group>"; };
+		B70A000000000000000000BF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B70A000000000000000000F0 /* AntiProcrastinator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AntiProcrastinator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -73,6 +75,7 @@
 			children = (
 				B70A000000000000000000B1 /* AntiProcrastinatorApp.swift */,
 				B70A000000000000000000B2 /* ContentView.swift */,
+				B70A000000000000000000BF /* Assets.xcassets */,
 				B70A000000000000000000C2 /* Components */,
 				B70A000000000000000000C3 /* Models */,
 				B70A000000000000000000C4 /* Navigation */,
@@ -212,6 +215,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B70A000000000000000000AF /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -447,4 +451,5 @@
 	};
 	rootObject = B70A000000000000000000D1 /* Project object */;
 }
+
 

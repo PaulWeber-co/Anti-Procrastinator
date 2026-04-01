@@ -31,14 +31,22 @@ class StorageService {
         defaults.set(mode?.rawValue, forKey: "planer_mode")
     }
 
-    func getPlanerData() -> [PlanerPeriod] {
-        guard let data = defaults.data(forKey: "planer_data") else { return [] }
+    func getPlanerData(for mode: PlanerMode? = nil) -> [PlanerPeriod] {
+        let key = mode.map { "planer_data_\($0.rawValue)" } ?? "planer_data"
+        guard let data = defaults.data(forKey: key) else {
+            // Fallback auf Altbestand, falls noch nicht pro Modus gespeichert wurde.
+            if mode != nil, let legacy = defaults.data(forKey: "planer_data") {
+                return (try? decoder.decode([PlanerPeriod].self, from: legacy)) ?? []
+            }
+            return []
+        }
         return (try? decoder.decode([PlanerPeriod].self, from: data)) ?? []
     }
 
-    func savePlanerData(_ data: [PlanerPeriod]) {
+    func savePlanerData(_ data: [PlanerPeriod], for mode: PlanerMode? = nil) {
+        let key = mode.map { "planer_data_\($0.rawValue)" } ?? "planer_data"
         if let encoded = try? encoder.encode(data) {
-            defaults.set(encoded, forKey: "planer_data")
+            defaults.set(encoded, forKey: key)
         }
     }
 
@@ -90,4 +98,5 @@ class StorageService {
         return formatter.string(from: Date())
     }
 }
+
 

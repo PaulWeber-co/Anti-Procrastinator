@@ -11,6 +11,7 @@ struct TodoView: View {
     private let colors = ThemeColors.dark // Dark by default for mobile
 
     var body: some View {
+        ScrollView {
         VStack(spacing: 0) {
             // ── Header ──
             HStack {
@@ -160,20 +161,20 @@ struct TodoView: View {
                 }
                 Spacer()
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 2) {
-                        ForEach(viewModel.todos) { todo in
-                            TodoItemRow(
-                                todo: todo,
-                                colors: colors,
-                                onToggle: { viewModel.toggleTodo(todo.id) },
-                                onDelete: { viewModel.deleteTodo(todo.id) }
-                            )
-                        }
+                LazyVStack(spacing: 2) {
+                    ForEach(viewModel.todos) { todo in
+                        TodoItemRow(
+                            todo: todo,
+                            colors: colors,
+                            onToggle: { viewModel.toggleTodo(todo.id) },
+                            onDelete: { viewModel.deleteTodo(todo.id) }
+                        )
                     }
-                    .padding(.horizontal, 20)
                 }
+                .padding(.horizontal, 20)
             }
+        }
+        .padding(.bottom, 28)
         }
         .background(colors.bg.ignoresSafeArea())
     }
@@ -257,4 +258,5 @@ struct TodoItemRow: View {
         .cornerRadius(12)
     }
 }
+
 

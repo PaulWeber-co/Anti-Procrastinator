@@ -14,6 +14,7 @@ struct CalendarView: View {
     private let dayNames = ["MO", "DI", "MI", "DO", "FR", "SA", "SO"]
 
     var body: some View {
+        GeometryReader { geo in
         VStack(spacing: 0) {
             // ── Header ──
             Text("KALENDER")
@@ -75,6 +76,9 @@ struct CalendarView: View {
             // ── Calendar Grid ──
             let days = generateDays()
             let rows = days.chunked(into: 7)
+            let rowCount = CGFloat(max(rows.count, 1))
+            let targetHeight = selectedDate == nil ? geo.size.height * 0.56 : geo.size.height * 0.44
+            let cellHeight = max(44, min(72, targetHeight / rowCount))
 
             VStack(spacing: 2) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, week in
@@ -86,6 +90,7 @@ struct CalendarView: View {
                                 tasksByDate: viewModel.getTasksByDate(),
                                 systemEvents: systemEvents,
                                 selectedDate: selectedDate,
+                                cellHeight: cellHeight,
                                 onTap: {
                                     if let date = day.date {
                                         withAnimation(.spring(response: 0.3)) {
@@ -100,6 +105,7 @@ struct CalendarView: View {
                 }
             }
             .padding(.horizontal, 16)
+            .frame(maxHeight: targetHeight)
 
             Spacer().frame(height: 12)
 
@@ -155,23 +161,29 @@ struct CalendarView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
-            Spacer()
-
-            // ── Sync Button ──
-            Button(action: { requestCalendarAccess() }) {
-                Text("SYNC MIT iOS KALENDER")
-                    .font(.system(size: 9, design: .monospaced))
-                    .fontWeight(.bold)
-                    .foregroundColor(colors.textMuted)
-                    .tracking(1)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(colors.border, lineWidth: 1))
-            }
-            .padding(.bottom, 40)
+            Spacer(minLength: 8)
         }
         .background(colors.bg.ignoresSafeArea())
+        .safeAreaInset(edge: .bottom) {
+            HStack {
+                Button(action: { requestCalendarAccess() }) {
+                    Text("SYNC MIT IOS KALENDER")
+                        .font(.system(size: 9, design: .monospaced))
+                        .fontWeight(.bold)
+                        .foregroundColor(colors.textMuted)
+                        .tracking(1)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(colors.border, lineWidth: 1))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 6)
+            .padding(.bottom, 14)
+            .background(colors.bg.opacity(0.95))
+        }
         .onAppear { requestCalendarAccess() }
+        }
     }
 
     // ── Calendar Logic ──
@@ -278,6 +290,7 @@ struct CalendarDayCell: View {
     let tasksByDate: [Date: [Todo]]
     let systemEvents: [Date: [String]]
     let selectedDate: Date?
+    let cellHeight: CGFloat
     let onTap: () -> Void
 
     private let calendar = Calendar.current
@@ -314,7 +327,7 @@ struct CalendarDayCell: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .aspectRatio(1, contentMode: .fit)
+            .frame(height: cellHeight)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(isSelected ? colors.red : day.isToday ? colors.text.opacity(0.08) : Color.clear)
@@ -336,4 +349,5 @@ extension Array {
         }
     }
 }
+
 
