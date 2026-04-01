@@ -4,9 +4,11 @@ import SwiftUI
 /// Minimalistisch, touch-optimiert, mit haptischem Feedback
 struct TodoView: View {
     @ObservedObject var viewModel: TodoViewModel
+    var autoFocusToken: Int = 0
     @State private var inputText = ""
     @State private var selectedCategory: TodoCategory = .arbeit
     @State private var showCategoryPicker = false
+    @FocusState private var isInputFocused: Bool
 
     private let colors = ThemeColors.dark // Dark by default for mobile
 
@@ -72,6 +74,7 @@ struct TodoView: View {
                     .foregroundColor(colors.text)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
+                    .focused($isInputFocused)
                     .onSubmit { addTodo() }
 
                 // Add Button
@@ -177,6 +180,12 @@ struct TodoView: View {
         .padding(.bottom, 28)
         }
         .background(colors.bg.ignoresSafeArea())
+        .onChange(of: autoFocusToken) { _ in
+            // Fokus mit kleinem Delay, damit die Seite nach dem Swipe schon sichtbar ist.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                isInputFocused = true
+            }
+        }
     }
 
     private func addTodo() {
@@ -258,5 +267,6 @@ struct TodoItemRow: View {
         .cornerRadius(12)
     }
 }
+
 
 
